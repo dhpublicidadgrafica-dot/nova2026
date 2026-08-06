@@ -1,0 +1,8 @@
+{
+  "name": "Remix NOVA Soluciones Digitales",
+  "description": "Agencia premium de transformación digital, desarrollo web, comercio electrónico, inteligencia artificial, software a medida y branding corporativo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
