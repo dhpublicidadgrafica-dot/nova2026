@@ -34,7 +34,11 @@ import {
   Lightbulb,
   CheckCircle2,
   Target,
-  Eye
+  Eye,
+  Video,
+  Lock,
+  Info,
+  Image as ImageIcon
 } from 'lucide-react';
 
 import { ServiceId, ServiceDetail, PortfolioItem, BlogArticle, ChatMessage } from './types';
@@ -49,8 +53,9 @@ import {
 } from './data';
 import ChameleonCanvas from './components/ChameleonCanvas';
 import ChameleonVideoPlayer from './components/ChameleonVideoPlayer';
+import GoogleCalendarHub from './components/GoogleCalendarHub';
 
-export type PageType = ServiceId | 'inicio' | 'nosotros' | 'contacto' | 'blog' | 'portafolio';
+export type PageType = ServiceId | 'inicio' | 'nosotros' | 'contacto' | 'blog' | 'portafolio' | 'agenda';
 
 export const PAGE_TO_PATH: Record<PageType, string> = {
   inicio: '/',
@@ -64,12 +69,14 @@ export const PAGE_TO_PATH: Record<PageType, string> = {
   portafolio: '/servicios/portafolio',
   contacto: '/servicios/contacto',
   blog: '/servicios/blog',
+  agenda: '/agenda',
 };
 
 export const getPageFromPath = (path: string): PageType => {
   const cleanPath = path.toLowerCase().replace(/\/$/, '') || '/';
   
   if (cleanPath === '/nosotros') return 'nosotros';
+  if (cleanPath === '/agenda' || cleanPath === '/calendar' || cleanPath === '/servicios/calendar') return 'agenda';
   if (cleanPath === '/servicios/brandingdemarca' || cleanPath === '/branding') return 'branding';
   if (cleanPath === '/servicios/paginaswebcorporativas' || cleanPath === '/web') return 'web';
   if (cleanPath === '/servicios/tiendasonline' || cleanPath === '/ecommerce') return 'ecommerce';
@@ -110,6 +117,24 @@ export default function App() {
   const [budgetCalculatorOpen, setBudgetCalculatorOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [activeBlogModal, setActiveBlogModal] = useState<BlogArticle | null>(null);
+  const [activeProjectModal, setActiveProjectModal] = useState<PortfolioItem | null>(null);
+  const [modalViewTab, setModalViewTab] = useState<'interactive' | 'hd'>('interactive');
+
+  const openProjectModal = (item: PortfolioItem) => {
+    setModalViewTab('interactive');
+    setActiveProjectModal(item);
+  };
+
+  const getEmbedUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
+      if (match && match[1]) {
+        return `https://drive.google.com/file/d/${match[1]}/preview`;
+      }
+    }
+    return url;
+  };
 
   // Filter States
   const [portfolioFilter, setPortfolioFilter] = useState<ServiceId | 'all'>('all');
@@ -121,7 +146,7 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState<string>('2026-07-20');
   const [selectedTime, setSelectedTime] = useState<string>('10:00 AM');
   const [schedulerService, setSchedulerService] = useState<string>('ai');
-  const [schedulerStatus, setSchedulerStatus] = useState<{ success?: boolean; message?: string; loading?: boolean }>({});
+  const [schedulerStatus, setSchedulerStatus] = useState<{ success?: boolean; message?: string; loading?: boolean; googleCalendarUrl?: string }>({});
 
   // Budget Calculator States
   const [calculatorServices, setCalculatorServices] = useState<ServiceId[]>(['web']);
@@ -271,19 +296,24 @@ export default function App() {
           service: schedulerService,
           date: selectedDate,
           time: selectedTime,
-          source: 'Calendario Web'
+          source: 'Calendario Web',
+          targetCommercialEmail: 'comercial@digitalhome.com.co'
         })
       });
       const data = await response.json();
 
       if (response.ok) {
-        setSchedulerStatus({ success: true, message: data.message });
+        setSchedulerStatus({
+          success: true,
+          message: data.message,
+          googleCalendarUrl: data.googleCalendarUrl
+        });
         setSchedulerForm({ name: '', email: '', company: '', message: '' });
         // Close modal after delay if open
         setTimeout(() => {
           setBookingModalOpen(false);
           setSchedulerStatus({});
-        }, 5000);
+        }, 8000);
       } else {
         throw new Error(data.error || 'Ocurrió un error');
       }
@@ -362,6 +392,15 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Unified action: Automatically redirect user to the dedicated standalone scheduling page (/agenda)
+  const handleAgendarAsesoria = () => {
+    setBookingModalOpen(false);
+    navigateToPage('agenda');
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
+  };
+
   return (
     <div className="relative min-h-screen bg-brand-bg text-white font-sans overflow-x-hidden selection:bg-brand-blue/30 selection:text-white">
       
@@ -417,12 +456,13 @@ export default function App() {
           </button>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8" aria-label="Navegación principal">
+          <nav className="hidden md:flex items-center gap-7" aria-label="Navegación principal">
             {[
               { id: 'inicio', label: 'Inicio' },
               { id: 'nosotros', label: 'Nosotros' },
               { id: 'servicios', label: 'Servicios', isDropdown: true },
               { id: 'portafolio', label: 'Portafolio' },
+              { id: 'agenda', label: 'Agenda' },
               { id: 'contacto', label: 'Contacto' },
               { id: 'blog', label: 'Blog' }
             ].map((link) => {
@@ -486,10 +526,11 @@ export default function App() {
           {/* Header Action Button */}
           <div className="hidden md:flex items-center gap-4">
             <button
-              onClick={() => setBookingModalOpen(true)}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wider bg-gradient-to-r from-brand-blue to-brand-purple hover:opacity-90 transition-all duration-300 shadow-[0_4px_20px_rgba(13,110,253,0.3)] cursor-pointer"
+              onClick={handleAgendarAsesoria}
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide bg-gradient-to-r from-brand-blue to-brand-purple hover:shadow-[0_0_20px_rgba(13,110,253,0.3)] transition-all duration-300 cursor-pointer flex items-center gap-2 text-white"
             >
-              Agendar Asesoría
+              <Calendar className="w-4 h-4" />
+              <span>Agendar Asesoría</span>
             </button>
           </div>
 
@@ -517,6 +558,7 @@ export default function App() {
                 { id: 'nosotros', label: 'Nosotros' },
                 { id: 'servicios', label: 'Servicios', isDropdown: true },
                 { id: 'portafolio', label: 'Portafolio' },
+                { id: 'agenda', label: 'Agenda / Citas' },
                 { id: 'contacto', label: 'Contacto' },
                 { id: 'blog', label: 'Blog' }
               ].map((link) => {
@@ -566,9 +608,9 @@ export default function App() {
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  setBookingModalOpen(true);
+                  handleAgendarAsesoria();
                 }}
-                className="w-full mt-2 py-3 rounded-xl text-center text-sm font-semibold bg-gradient-to-r from-brand-blue to-brand-purple"
+                className="w-full mt-2 py-3 rounded-xl text-center text-sm font-semibold bg-gradient-to-r from-brand-blue to-brand-purple cursor-pointer"
               >
                 Agendar Asesoría
               </button>
@@ -618,7 +660,7 @@ export default function App() {
                   {/* Buttons */}
                   <div className="flex flex-col sm:flex-row items-center justify-start gap-4 mt-2 w-full sm:w-auto">
                     <button
-                      onClick={() => setBookingModalOpen(true)}
+                      onClick={handleAgendarAsesoria}
                       className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-sm font-semibold tracking-wide bg-gradient-to-r from-brand-blue to-brand-purple hover:shadow-[0_0_30px_rgba(13,110,253,0.4)] transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
                     >
                       <span>Agendar Asesoría</span>
@@ -786,7 +828,7 @@ export default function App() {
                 </div>
               </section>
 
-              {/* SECTIONS PORTFOLIO AND ELITE TECHS REMOVED FROM HOME PAGE */}
+              {/* SECTIONS PORTFOLIO AND TECHS REMOVED FROM HOME PAGE */}
 
 
 
@@ -869,138 +911,15 @@ export default function App() {
                 </div>
               </section>
 
-              {/* CONTACTO & SCHEDULER SECTION */}
+              {/* CONTACTO & GOOGLE CALENDAR SCHEDULER SECTION */}
               <section className="max-w-7xl mx-auto px-4 md:px-8 py-16 border-t border-white/5" id="contacto-section">
-                <div className="text-left max-w-xl mb-16">
-                  <h2 className="text-3xl md:text-4.5xl font-bold tracking-tight text-white uppercase">AGENDA TU ASESORIA GRATUITA</h2>
-                  <p className="text-xs md:text-sm text-[#D9D9D9]/70 mt-2">
-                    Programa una videollamada directa de inmediato con nuestro calendario inteligente para descubrir cómo podemos potenciar tu negocio.
-                  </p>
-                </div>
-
-                <div className="flex justify-center">
-                  
-                  {/* Centered Interactive Scheduler (CRO focus) */}
-                  <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-white/[0.01] p-6 text-left shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-blue to-brand-purple" />
-                    
-                    <div className="flex items-center gap-2 mb-6">
-                      <Calendar className="w-5 h-5 text-brand-blue animate-pulse" />
-                      <h3 className="text-lg font-bold text-white">Agendamiento Inmediato</h3>
-                    </div>
-
-                    <p className="text-xs text-[#D9D9D9]/70 mb-6">
-                      Selecciona la fecha y la hora ideal para una videollamada de descubrimiento técnico gratuita de 15 minutos.
-                    </p>
-
-                    <form onSubmit={handleBookConsultation} className="flex flex-col gap-4">
-                      {/* Service selector */}
-                      <div>
-                        <label className="block text-[10px] font-mono text-[#D9D9D9]/50 uppercase mb-1.5">Ecosistema de Interés</label>
-                        <select
-                          value={schedulerService}
-                          onChange={(e) => setSchedulerService(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none focus:border-brand-blue"
-                        >
-                          <option value="branding" className="text-[#010715] bg-white">Branding de Marca</option>
-                          <option value="web" className="text-[#010715] bg-white">Páginas Web Corporativas</option>
-                          <option value="ecommerce" className="text-[#010715] bg-white">Tiendas Online</option>
-                          <option value="ai" className="text-[#010715] bg-white">Agentes IA</option>
-                          <option value="software" className="text-[#010715] bg-white">Software a Medida</option>
-                          <option value="merch" className="text-[#010715] bg-white">Merchandising</option>
-                        </select>
-                      </div>
-
-                      {/* Mini Calendar Selectors */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-mono text-[#D9D9D9]/50 uppercase mb-1.5">Seleccionar Fecha</label>
-                          <select
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none focus:border-brand-blue"
-                          >
-                            <option value="2026-07-20" className="text-[#010715] bg-white">Lunes, 20 Jul</option>
-                            <option value="2026-07-21" className="text-[#010715] bg-white">Martes, 21 Jul</option>
-                            <option value="2026-07-22" className="text-[#010715] bg-white">Miércoles, 22 Jul</option>
-                            <option value="2026-07-23" className="text-[#010715] bg-white">Jueves, 23 Jul</option>
-                            <option value="2026-07-24" className="text-[#010715] bg-white">Viernes, 24 Jul</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-mono text-[#D9D9D9]/50 uppercase mb-1.5">Seleccionar Hora</label>
-                          <select
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none focus:border-brand-blue"
-                          >
-                            <option value="09:00 AM" className="text-[#010715] bg-white">09:00 AM (EST)</option>
-                            <option value="10:00 AM" className="text-[#010715] bg-white">10:00 AM (EST)</option>
-                            <option value="11:30 AM" className="text-[#010715] bg-white">11:30 AM (EST)</option>
-                            <option value="02:00 PM" className="text-[#010715] bg-white">02:00 PM (EST)</option>
-                            <option value="03:30 PM" className="text-[#010715] bg-white">03:30 PM (EST)</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* General fields */}
-                      <div className="grid grid-cols-1 gap-3 mt-1">
-                        <input
-                          type="text"
-                          placeholder="Tu nombre completo *"
-                          required
-                          value={schedulerForm.name}
-                          onChange={(e) => setSchedulerForm({ ...schedulerForm, name: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white placeholder-white/30 focus:outline-none focus:border-brand-blue"
-                        />
-                        <input
-                          type="email"
-                          placeholder="Tu correo electrónico *"
-                          required
-                          value={schedulerForm.email}
-                          onChange={(e) => setSchedulerForm({ ...schedulerForm, email: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white placeholder-white/30 focus:outline-none focus:border-brand-blue"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Empresa (Opcional)"
-                          value={schedulerForm.company}
-                          onChange={(e) => setSchedulerForm({ ...schedulerForm, company: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white placeholder-white/30 focus:outline-none focus:border-brand-blue"
-                        />
-                        <textarea
-                          placeholder="Háblanos un poco de tu proyecto o requerimientos (Opcional)"
-                          rows={2}
-                          value={schedulerForm.message}
-                          onChange={(e) => setSchedulerForm({ ...schedulerForm, message: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white placeholder-white/30 focus:outline-none focus:border-brand-blue resize-none"
-                        />
-                      </div>
-
-                      {schedulerStatus.message && (
-                        <div className={`p-3 rounded-xl text-xs font-semibold ${schedulerStatus.success ? 'bg-brand-green/10 text-brand-green border border-brand-green/20' : 'bg-brand-red/10 text-brand-red border border-brand-red/20'}`}>
-                          {schedulerStatus.message}
-                        </div>
-                      )}
-
-                      <button
-                        type="submit"
-                        disabled={schedulerStatus.loading}
-                        className="w-full mt-2 py-3 rounded-xl text-xs font-bold tracking-wider text-white bg-gradient-to-r from-brand-blue to-brand-purple cursor-pointer flex items-center justify-center gap-2 shadow-lg"
-                      >
-                        {schedulerStatus.loading ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <Calendar className="w-4 h-4" />
-                            <span>Confirmar Cita en Calendar</span>
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  </div>
-                </div>
-
+                {/* Google Calendar Hub Component */}
+                <GoogleCalendarHub 
+                  compact={true}
+                  onEventCreated={() => {
+                    console.log('Event booked via Google Calendar Hub');
+                  }} 
+                />
               </section>
             </motion.div>
           )}
@@ -1103,7 +1022,7 @@ export default function App() {
                       "CREAMOS SISTEMAS COMPLETOS PARA HACER CRECER NEGOCIOS"
                     </h2>
                     <p className="text-xs sm:text-sm text-[#D9D9D9]/80 leading-relaxed">
-                      En DIGITAL HOME no vendemos páginas web aisladas. No vendemos logotipos sueltos. No vendemos software sin estrategia. Cada proyecto integra <strong>estrategia, diseño, tecnología y automatización</strong> para que la inversión del cliente produzca resultados reales.
+                      En <strong>DIGITAL HOME</strong> diseñamos y desarrollamos páginas web empresariales de alto rendimiento, creadas a la medida para transmitir la solidez de tu marca, optimizar la experiencia de usuario y convertir visitantes en clientes potenciales. Integramos <strong>estructura intuitiva, diseño vanguardista, velocidad de carga ultrarrápida y optimización SEO</strong> para que tu empresa destaque con una presencia digital líder en el mercado.
                     </p>
                   </div>
 
@@ -1203,11 +1122,11 @@ export default function App() {
                 <div>
                   <h3 className="text-2xl font-bold text-white mb-2">Hablemos de tu proyecto</h3>
                   <p className="text-xs md:text-sm text-[#D9D9D9]/80 max-w-xl leading-relaxed">
-                    Escríbenos a <strong>comercial@digitalhome.com</strong> o comunícate vía WhatsApp al <strong>(+57) 322 613 87 73</strong> para iniciar la transformación digital de tu marca.
+                    Escríbenos a <strong>comercial@digitalhome.com.co</strong> o comunícate vía WhatsApp al <strong>(+57) 322 613 87 73</strong> para iniciar la transformación digital de tu marca.
                   </p>
                 </div>
                 <button
-                  onClick={() => setBookingModalOpen(true)}
+                  onClick={handleAgendarAsesoria}
                   className="px-6 py-3.5 rounded-xl text-xs font-bold bg-white text-brand-bg hover:opacity-90 transition-all duration-300 whitespace-nowrap cursor-pointer flex items-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
@@ -1220,7 +1139,12 @@ export default function App() {
           {/* INTERNAL PAGES: SPECIFIC SERVICES VIEWS */}
           {SERVICES_DATA.some(s => s.id === activePage) && (() => {
             const service = SERVICES_DATA.find(s => s.id === activePage)!;
-            const relatedPortfolio = PORTFOLIO_DATA.filter(p => p.serviceId === service.id);
+            const primaryPortfolio = PORTFOLIO_DATA.filter(p => p.serviceId === service.id);
+            const fallbackPortfolio = PORTFOLIO_DATA.filter(p => p.serviceId !== service.id);
+            const relatedPortfolio = (primaryPortfolio.length >= 3 
+              ? primaryPortfolio 
+              : [...primaryPortfolio, ...fallbackPortfolio]
+            ).slice(0, 3);
 
             return (
               <motion.div
@@ -1253,11 +1177,11 @@ export default function App() {
 
                     <div className="flex gap-4 mt-4">
                       <button
-                        onClick={() => setBookingModalOpen(true)}
+                        onClick={handleAgendarAsesoria}
                         className="px-6 py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-blue to-brand-purple hover:opacity-95 cursor-pointer flex items-center gap-2"
                       >
                         <Calendar className="w-4 h-4" />
-                        <span>Agendar Videollamada</span>
+                        <span>Agendar Asesoría</span>
                       </button>
                     </div>
                   </div>
@@ -1267,11 +1191,187 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Custom Showcase for Branding Service */}
+                {service.id === 'branding' && (
+                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-2xl">
+                      <img
+                        src="https://lh3.googleusercontent.com/d/1EbZkTDwzRrxGyinssNQ_CFaRXKckMs6Z"
+                        alt="Ecosistema de Marca DIGITAL HOME - Branding Showcase"
+                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback) {
+                            target.dataset.triedFallback = 'true';
+                            target.src = 'https://drive.google.com/thumbnail?id=1EbZkTDwzRrxGyinssNQ_CFaRXKckMs6Z&sz=w1600';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
+                        <div>
+                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">IDENTIDAD VISUAL CORPORATIVA</span>
+                          <h4 className="text-lg sm:text-xl font-bold text-white">Manual de Identidad y Camaleón Oficial en 3D de DIGITAL HOME</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Showcase for Web Service */}
+                {service.id === 'web' && (
+                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-2xl">
+                      <img
+                        src="https://lh3.googleusercontent.com/d/13_HTBZd3yRZ4WsMlmp0QNjZwq65Yt9tn"
+                        alt="Desarrollo Web DIGITAL HOME - Showcase"
+                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback) {
+                            target.dataset.triedFallback = 'true';
+                            target.src = 'https://drive.google.com/thumbnail?id=13_HTBZd3yRZ4WsMlmp0QNjZwq65Yt9tn&sz=w1600';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
+                        <div>
+                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">ALTA INGENIERÍA DIGITAL</span>
+                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Desarrollo de Ecosistemas Web DIGITAL HOME</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Showcase for Ecommerce Service */}
+                {service.id === 'ecommerce' && (
+                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-2xl">
+                      <img
+                        src="https://lh3.googleusercontent.com/d/1hytoJvgqZJ4XbSAz5H6EGqi2Hl7_PUWV"
+                        alt="Tienda Online DIGITAL HOME - Showcase"
+                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback) {
+                            target.dataset.triedFallback = 'true';
+                            target.src = 'https://drive.google.com/thumbnail?id=1hytoJvgqZJ4XbSAz5H6EGqi2Hl7_PUWV&sz=w1600';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
+                        <div>
+                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">CONVERSIÓN EXTREMA</span>
+                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Tiendas Online y Pasarelas DIGITAL HOME</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Showcase for AI Agent Service */}
+                {service.id === 'ai' && (
+                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <img
+                        src="https://lh3.googleusercontent.com/d/1HsB-L3GzSnzB3n7-gm5KUGrkhlqkkJKs"
+                        alt="Agentes de Inteligencia Artificial DIGITAL HOME - Showcase"
+                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback) {
+                            target.dataset.triedFallback = 'true';
+                            target.src = 'https://drive.google.com/thumbnail?id=1HsB-L3GzSnzB3n7-gm5KUGrkhlqkkJKs&sz=w1600';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
+                        <div>
+                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">AUTONOMÍA Y COMPUTACIÓN COGNITIVA</span>
+                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Agentes Cognitivos y Camaleón IA de DIGITAL HOME</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Showcase for Software Service */}
+                {service.id === 'software' && (
+                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <img
+                        src="https://lh3.googleusercontent.com/d/1VjnWcjY0khfHcRbdpUqqbOKJeFdm1NcA"
+                        alt="Software a Medida DIGITAL HOME - Showcase"
+                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback) {
+                            target.dataset.triedFallback = 'true';
+                            target.src = 'https://drive.google.com/thumbnail?id=1VjnWcjY0khfHcRbdpUqqbOKJeFdm1NcA&sz=w1600';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
+                        <div>
+                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">ARQUITECTURA DE ALTO RENDIMIENTO</span>
+                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Plataformas y Desarrollo de Software DIGITAL HOME</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Showcase for Merchandising Service */}
+                {service.id === 'merch' && (
+                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <img
+                        src="https://lh3.googleusercontent.com/d/1GQcKFlCaVY5Ofwolx0MoubLu-PFQJWwf"
+                        alt="Merchandising Corporativo DIGITAL HOME - Showcase"
+                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback) {
+                            target.dataset.triedFallback = 'true';
+                            target.src = 'https://drive.google.com/thumbnail?id=1GQcKFlCaVY5Ofwolx0MoubLu-PFQJWwf&sz=w1600';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
+                        <div>
+                          <span className="text-xs font-mono text-brand-red uppercase tracking-wider block mb-1">CALIDAD INDUSTRIAL PREMIUM</span>
+                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Merchandising y Packaging de DIGITAL HOME</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* 2. Core Benefits Grid */}
                 <div className="mb-20">
                   <div className="text-left mb-10">
                     <span className="text-[10px] font-mono tracking-widest text-[#D9D9D9]/50 uppercase block mb-1">DIFERENCIADORES CLAVE</span>
-                    <h2 className="text-2xl md:text-3xl font-bold text-white">¿Por qué elegir DIGITAL HOME para {service.title.replace('\n', ' ')}?</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold text-white">
+                      {service.id === 'branding'
+                        ? '¿Por qué elegir DIGITAL HOME para TU Branding?'
+                        : service.id === 'web'
+                        ? '¿Por qué elegir DIGITAL HOME para TU Página Web?'
+                        : service.id === 'ecommerce'
+                        ? '¿Por qué elegir DIGITAL HOME para TU Tienda Online?'
+                        : service.id === 'ai'
+                        ? '¿Por qué elegir DIGITAL HOME para TU Agente IA?'
+                        : service.id === 'software'
+                        ? '¿Por qué elegir DIGITAL HOME para TU Software EMPRESARIAL?'
+                        : service.id === 'merch'
+                        ? '¿Por qué elegir DIGITAL HOME para TU Merchandising?'
+                        : `¿Por qué elegir DIGITAL HOME para ${service.title.replace('\n', ' ')}?`}
+                    </h2>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
@@ -1323,198 +1423,61 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Custom Showcase for Branding Service */}
-                {service.id === 'branding' && (
-                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
-                    <div className="mb-10">
-                      <span className="text-[10px] font-mono tracking-widest text-[#D9D9D9]/50 uppercase block mb-1">IDENTIDAD DE MARCA DE ÉLITE</span>
-                      <h2 className="text-2xl md:text-3xl font-bold text-white">Manuales de Marca & Sistemas de Identidad Visual</h2>
-                      <p className="text-xs sm:text-sm text-[#D9D9D9]/70 max-w-2xl mt-2">
-                        Explora los cimientos visuales de DIGITAL HOME. Diseñamos pautas cromáticas rigurosas, logotipos vectoriales de precisión matemática y tipografías personalizadas que transmiten elegancia, tecnología y adaptabilidad sin fricciones.
-                      </p>
-                    </div>
-
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-2xl">
-                      <img
-                        src="https://lh3.googleusercontent.com/d/1QO4hJ98G9ztzeUgl4DswHtxgX6tvSMhz"
-                        alt="Ecosistema de Marca DIGITAL HOME - Branding Showcase"
-                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
-                        <div>
-                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">IDENTIDAD VISUAL CORPORATIVA</span>
-                          <h4 className="text-lg sm:text-xl font-bold text-white">Manual de Identidad y Camaleón Oficial en 3D de DIGITAL HOME</h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom Showcase for Web Service */}
-                {service.id === 'web' && (
-                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
-                    <div className="mb-10">
-                      <span className="text-[10px] font-mono tracking-widest text-[#D9D9D9]/50 uppercase block mb-1">INGENIERÍA E IMPACTO</span>
-                      <h2 className="text-2xl md:text-3xl font-bold text-white">Casos de Éxito & Sitios de Élite</h2>
-                      <p className="text-xs sm:text-sm text-[#D9D9D9]/70 max-w-2xl mt-2">
-                        Explora la proyección real de nuestro desarrollo de vanguardia. Desde interfaces fluidas con animaciones optimizadas a 60fps hasta arquitecturas web de ultra alta velocidad que mimetizan la precisión técnica de DIGITAL HOME.
-                      </p>
-                    </div>
-
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-2xl">
-                      <img
-                        src="https://lh3.googleusercontent.com/d/13_pJH4OVTJC1K-WVamiY9c5M81fPcT6H"
-                        alt="Desarrollo Web DIGITAL HOME - Showcase"
-                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
-                        <div>
-                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">ALTA INGENIERÍA DIGITAL</span>
-                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Desarrollo de Ecosistemas Web DIGITAL HOME</h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom Showcase for Ecommerce Service */}
-                {service.id === 'ecommerce' && (
-                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
-                    <div className="mb-10">
-                      <span className="text-[10px] font-mono tracking-widest text-[#D9D9D9]/50 uppercase block mb-1">COMERCIO SIN FRICCIÓN</span>
-                      <h2 className="text-2xl md:text-3xl font-bold text-white">Ecosistema de Comercio Conversacional & Escalable</h2>
-                      <p className="text-xs sm:text-sm text-[#D9D9D9]/70 max-w-2xl mt-2">
-                        Explora la proyección real de nuestras tiendas online de alta gama. Desde pasarelas integradas de pago global hasta optimización de conversión y diseños ultra-fluidos que mimetizan la versatilidad de DIGITAL HOME.
-                      </p>
-                    </div>
-
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-2xl">
-                      <img
-                        src="https://lh3.googleusercontent.com/d/10DT70pkZ5c4cftWpLa05rmQkp2-kRHrc"
-                        alt="Tienda Online DIGITAL HOME - Showcase"
-                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
-                        <div>
-                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">CONVERSIÓN EXTREMA</span>
-                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Tiendas Online y Pasarelas DIGITAL HOME</h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom Showcase for AI Agent Service */}
-                {service.id === 'ai' && (
-                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
-                    <div className="mb-10">
-                      <span className="text-[10px] font-mono tracking-widest text-brand-blue uppercase block mb-1">INTELIGENCIA ARTIFICIAL DE VANGUARDIA</span>
-                      <h2 className="text-2xl md:text-3xl font-bold text-white">Agentes Autónomos & Ecosistemas Cognitivos</h2>
-                      <p className="text-xs sm:text-sm text-[#D9D9D9]/70 max-w-2xl mt-2">
-                        Explora la proyección avanzada de nuestros Agentes de Inteligencia Artificial. Diseñamos modelos cognitivos, procesamiento multimodal y redes neuronales adaptativas construidas para automatizar decisiones de negocio con mimetismo y precisión absoluta.
-                      </p>
-                    </div>
-
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                      <img
-                        src="https://lh3.googleusercontent.com/d/1Dcrwwk7ihJtrPiYWk_YNgxin8J6uYwaI"
-                        alt="Agentes de Inteligencia Artificial DIGITAL HOME - Showcase"
-                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
-                        <div>
-                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">AUTONOMÍA Y COMPUTACIÓN COGNITIVA</span>
-                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Agentes Cognitivos y Camaleón IA de DIGITAL HOME</h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom Showcase for Software Service */}
-                {service.id === 'software' && (
-                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
-                    <div className="mb-10">
-                      <span className="text-[10px] font-mono tracking-widest text-brand-blue uppercase block mb-1">INGENIERÍA A MEDIDA</span>
-                      <h2 className="text-2xl md:text-3xl font-bold text-white">Sistemas Robustos & Arquitecturas de Software Elite</h2>
-                      <p className="text-xs sm:text-sm text-[#D9D9D9]/70 max-w-2xl mt-2">
-                        Explora la proyección real de nuestros desarrollos de software a medida. Desde plataformas en la nube de alta disponibilidad hasta arquitecturas escalables y bases de datos seguras construidas para mimetizar la precisión y robustez de DIGITAL HOME.
-                      </p>
-                    </div>
-
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                      <img
-                        src="https://lh3.googleusercontent.com/d/1KTjnwlBvNcbTwcSIHpJOB23_6nzH0b25"
-                        alt="Software a Medida DIGITAL HOME - Showcase"
-                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
-                        <div>
-                          <span className="text-xs font-mono text-brand-blue uppercase tracking-wider block mb-1">ARQUITECTURA DE ALTO RENDIMIENTO</span>
-                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Plataformas y Desarrollo de Software DIGITAL HOME</h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom Showcase for Merchandising Service */}
-                {service.id === 'merch' && (
-                  <div className="mb-20 border-t border-white/5 pt-16 text-left">
-                    <div className="mb-10">
-                      <span className="text-[10px] font-mono tracking-widest text-brand-red uppercase block mb-1">IMPACTO TANGIBLE</span>
-                      <h2 className="text-2xl md:text-3xl font-bold text-white">Ecosistema de Merchandising & Packaging Premium</h2>
-                      <p className="text-xs sm:text-sm text-[#D9D9D9]/70 max-w-2xl mt-2">
-                        Visualiza la proyección física de tu marca en el mundo real. Diseñamos empaques, papelería de alta costura, uniformes técnicos y merchandising de élite alineados cromáticamente con la precisión del camaleón de DIGITAL HOME.
-                      </p>
-                    </div>
-
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.01] p-4 group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                      <img
-                        src="https://lh3.googleusercontent.com/d/1O-ttOZgUT_7fvWpJ21d0T7HHM6eyS6b0"
-                        alt="Merchandising Corporativo DIGITAL HOME - Showcase"
-                        className="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-[1.005]"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-10 pointer-events-none">
-                        <div>
-                          <span className="text-xs font-mono text-brand-red uppercase tracking-wider block mb-1">CALIDAD INDUSTRIAL PREMIUM</span>
-                          <h4 className="text-lg sm:text-xl font-bold text-white">Línea Oficial de Merchandising y Packaging de DIGITAL HOME</h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* 4. Related Case Studies */}
-                {relatedPortfolio.length > 0 && (
+                {relatedPortfolio.length > 0 && service.id !== 'ai' && service.id !== 'software' && (
                   <div className="mb-20 border-t border-white/5 pt-16 text-left">
                     <div className="mb-10">
                       <span className="text-[10px] font-mono tracking-widest text-[#D9D9D9]/50 uppercase block mb-1">HISTORIAS COMPARTIDAS</span>
                       <h2 className="text-2xl md:text-3xl font-bold text-white">Casos de Éxito en esta Área</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {relatedPortfolio.map(item => (
-                        <div key={item.id} className="p-6 rounded-3xl bg-white/[0.01] border border-white/10 flex flex-col md:flex-row gap-6 items-start">
-                          <img
-                            src={item.imageUrl}
-                            alt={item.title}
-                            className="w-full md:w-44 aspect-video md:aspect-square object-cover rounded-2xl border border-white/15"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="flex-grow">
-                            <span className="text-[9px] font-mono tracking-widest text-brand-blue block mb-1 uppercase">CLIENTE: {item.client}</span>
-                            <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-                            <p className="text-xs text-[#D9D9D9]/80 mb-4">{item.description}</p>
-                            <div className="p-3 rounded-xl bg-brand-blue/[0.03] border border-brand-blue/10 text-[11px] text-brand-blue font-semibold">
-                              ROI: {item.result}
+                        <div key={item.id} className="p-6 rounded-3xl bg-slate-200 border border-slate-300 flex flex-col gap-4 items-start shadow-md hover:shadow-lg transition-shadow">
+                          <button
+                            type="button"
+                            onClick={() => openProjectModal(item)}
+                            className="w-full aspect-video rounded-2xl overflow-hidden border border-slate-300 block group/img relative cursor-pointer text-left"
+                            title={`Ver ${item.title}`}
+                          >
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (!target.dataset.triedFallback && item.imageUrl.includes('lh3.googleusercontent.com/d/')) {
+                                  const id = item.imageUrl.split('/d/')[1];
+                                  if (id) {
+                                    target.dataset.triedFallback = 'true';
+                                    target.src = `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+                                  }
+                                }
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-bold">
+                              <span>Ver Proyecto Completo</span>
+                              <ExternalLink className="w-4 h-4" />
                             </div>
+                          </button>
+                          <div className="flex-grow w-full">
+                            <span className="text-[9px] font-mono tracking-widest text-brand-purple font-bold block mb-1 uppercase">CLIENTE: {item.client}</span>
+                            <button
+                              type="button"
+                              onClick={() => openProjectModal(item)}
+                              className="text-lg font-bold text-slate-900 mb-2 hover:text-brand-purple transition-colors block text-left cursor-pointer"
+                            >
+                              {item.title}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openProjectModal(item)}
+                              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-brand-purple text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm mt-1"
+                            >
+                              <Globe className="w-3.5 h-3.5" />
+                              <span>Ver Proyecto en Visor</span>
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -1522,98 +1485,9 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 5. Service Specific FAQs Accordion */}
-                <div className="mb-16 border-t border-white/5 pt-16 max-w-3xl mx-auto text-left">
-                  <h2 className="text-2xl font-bold text-white text-center mb-8">Preguntas sobre este Servicio</h2>
-                  
-                  <div className="flex flex-col gap-4">
-                    {service.faq.map((faq, i) => (
-                      <div key={i} className="rounded-2xl border border-white/5 bg-white/[0.01] p-6">
-                        <h4 className="text-sm font-bold text-white mb-2">{faq.question}</h4>
-                        <p className="text-xs text-[#D9D9D9]/75 leading-relaxed">{faq.answer}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* 6. Embedded Conversion Callout Form */}
-                <div className="rounded-3xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/10 p-8 md:p-12 text-left shadow-2xl">
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                    <div className="lg:col-span-5 flex flex-col gap-4">
-                      <h3 className="text-2xl font-bold text-white">¿Estás listo para dar el salto?</h3>
-                      <p className="text-xs text-[#D9D9D9]/75 leading-relaxed">
-                        Completa este breve formulario o agenda directamente una llamada técnica. Un director de proyectos senior evaluará tu solicitud de inmediato.
-                      </p>
-                      <div className="flex flex-col gap-1 text-xs font-mono text-brand-purple mt-2">
-                        <span>● Respuesta técnica garantizada en menos de 2 horas hábiles.</span>
-                        <span>● Videollamada inicial 100% libre de compromisos.</span>
-                      </div>
-                    </div>
 
-                    <div className="lg:col-span-7">
-                      <form onSubmit={handleContactSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          required
-                          placeholder="Tu Nombre *"
-                          value={contactForm.name}
-                          onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none"
-                        />
-                        <input
-                          type="email"
-                          required
-                          placeholder="Tu Correo Corporativo *"
-                          value={contactForm.email}
-                          onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Empresa"
-                          value={contactForm.company}
-                          onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none"
-                        />
-                        <select
-                          value={contactForm.budget}
-                          onChange={(e) => setContactForm({ ...contactForm, budget: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none"
-                        >
-                          <option value="1500-5000">Presupuesto: $1.5K - $5K</option>
-                          <option value="5000-15000">Presupuesto: $5K - $15K</option>
-                          <option value="15000+">Presupuesto: $15K+</option>
-                        </select>
-                        
-                        <div className="md:col-span-2">
-                          <textarea
-                            required
-                            rows={3}
-                            placeholder="Describe brevemente tus requerimientos para el servicio de de branding, web o software..."
-                            value={contactForm.message}
-                            onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white focus:outline-none resize-none"
-                          />
-                        </div>
 
-                        {contactStatus.message && (
-                          <div className="md:col-span-2 p-3 rounded-xl text-xs bg-brand-purple/10 text-brand-purple border border-brand-purple/15">
-                            {contactStatus.message}
-                          </div>
-                        )}
-
-                        <div className="md:col-span-2">
-                          <button
-                            type="submit"
-                            className="w-full py-3.5 rounded-xl text-xs font-bold text-brand-bg bg-white hover:bg-white/95 cursor-pointer shadow-lg"
-                          >
-                            Solicitar Cotización de {service.title}
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
               </motion.div>
             );
           })()}
@@ -1632,28 +1506,60 @@ export default function App() {
                   <span>PORTAFOLIO DE IMPACTO</span>
                 </div>
                 <h1 className="text-4xl font-extrabold text-white">Casos de éxito verificados</h1>
-                <p className="text-sm md:text-base text-[#D9D9D9]/80">
-                  Descubre cómo hemos transformado la presencia y la productividad operativa de marcas líderes globales a través de soluciones de código sofisticado y diseño premium.
-                </p>
               </div>
 
               {/* Portfolio Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-                {PORTFOLIO_DATA.map(item => (
+                {filteredPortfolio.map(item => (
                   <div
                     key={item.id}
                     className="group relative rounded-3xl overflow-hidden bg-white/[0.01] border border-white/10 flex flex-col hover:border-white/20 transition-all duration-300 text-left"
                   >
-                    <img src={item.imageUrl} alt={item.title} className="w-full aspect-[16/9] object-cover" referrerPolicy="no-referrer" />
+                    <button
+                      type="button"
+                      onClick={() => openProjectModal(item)}
+                      className="w-full aspect-[16/9] overflow-hidden block group/img relative cursor-pointer text-left"
+                      title={`Ver ${item.title}`}
+                    >
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback && item.imageUrl.includes('lh3.googleusercontent.com/d/')) {
+                            const id = item.imageUrl.split('/d/')[1];
+                            if (id) {
+                              target.dataset.triedFallback = 'true';
+                              target.src = `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+                            }
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-bold">
+                        <span>Ver Proyecto / Imagen Completa HD</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </div>
+                    </button>
                     <div className="p-8 flex flex-col justify-between flex-grow">
                       <div>
                         <span className="text-[10px] font-mono tracking-wider text-brand-blue block mb-1">CLIENTE: {item.client.toUpperCase()}</span>
-                        <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
-                        <p className="text-xs text-[#D9D9D9]/75 leading-relaxed mb-6">{item.description}</p>
-                      </div>
-                      <div className="p-4 rounded-xl bg-brand-blue/[0.04] border border-brand-blue/10 text-xs font-semibold text-brand-blue flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        <span>KPI: {item.result}</span>
+                        <button
+                          type="button"
+                          onClick={() => openProjectModal(item)}
+                          className="text-xl font-bold text-white mb-3 hover:text-brand-blue transition-colors block text-left cursor-pointer"
+                        >
+                          {item.title}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openProjectModal(item)}
+                          className="mt-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-brand-blue text-white text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer w-fit border border-white/10"
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                          <span>Abrir Proyecto en Visor</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1689,7 +1595,22 @@ export default function App() {
                     onClick={() => setActiveBlogModal(article)}
                     className="group rounded-3xl overflow-hidden bg-white/[0.01] hover:bg-white/[0.02] border border-white/5 hover:border-white/15 transition-all duration-300 text-left cursor-pointer flex flex-col shadow-xl"
                   >
-                    <img src={article.imageUrl} alt={article.title} className="w-full aspect-[16/10] object-cover" referrerPolicy="no-referrer" />
+                    <img
+                      src={article.imageUrl}
+                      alt={article.title}
+                      className="w-full aspect-[16/10] object-cover"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.dataset.triedFallback && article.imageUrl.includes('lh3.googleusercontent.com/d/')) {
+                          const id = article.imageUrl.split('/d/')[1];
+                          if (id) {
+                            target.dataset.triedFallback = 'true';
+                            target.src = `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+                          }
+                        }
+                      }}
+                    />
                     <div className="p-6 flex flex-col justify-between flex-grow">
                       <div>
                         <div className="flex items-center justify-between mb-3 text-[10px] font-mono text-[#D9D9D9]/50">
@@ -1728,9 +1649,6 @@ export default function App() {
               <div className="text-center max-w-2xl mx-auto mb-16">
                 <span className="text-[10px] font-mono tracking-widest text-[#D9D9D9]/50 uppercase block mb-1">CONECTA CON NOSOTROS</span>
                 <h1 className="text-4xl font-extrabold text-white">Cuéntanos sobre tu próximo proyecto</h1>
-                <p className="text-xs md:text-sm text-[#D9D9D9]/75 mt-2">
-                  Completa el formulario de propuesta, agenda una llamada técnica de inmediato en nuestro calendario o contáctanos por WhatsApp o correo corporativo.
-                </p>
               </div>
 
               {/* Direct Grid with channels */}
@@ -1738,26 +1656,23 @@ export default function App() {
                 <div className="p-6 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
                   <Mail className="w-6 h-6 text-brand-blue" />
                   <h3 className="text-sm font-bold text-white">Correo Corporativo</h3>
-                  <p className="text-xs text-[#D9D9D9]/70 mb-2">Envíanos un correo detallado y te responderemos en menos de 2 horas hábiles.</p>
-                  <a href="mailto:hola@digitalhome.cl" className="text-xs font-mono text-brand-blue hover:underline">
-                    hola@digitalhome.cl
+                  <a href="mailto:comercial@digitalhome.com.co" className="text-xs font-mono text-brand-blue hover:underline">
+                    comercial@digitalhome.com.co
                   </a>
                 </div>
 
                 <div className="p-6 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
                   <Phone className="w-6 h-6 text-brand-green" />
                   <h3 className="text-sm font-bold text-white">WhatsApp de Soporte</h3>
-                  <p className="text-xs text-[#D9D9D9]/70 mb-2">Chatea directamente con un asesor para agilizar tus consultas iniciales.</p>
-                  <a href="https://wa.me/56955550192" target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-brand-green hover:underline">
-                    +56 9 5555 0192
+                  <a href="https://wa.me/573226138773" target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-brand-green hover:underline">
+                    (+57) 3226138773
                   </a>
                 </div>
 
                 <div className="p-6 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
                   <MapPin className="w-6 h-6 text-brand-purple" />
                   <h3 className="text-sm font-bold text-white">Nuestras Oficinas</h3>
-                  <p className="text-xs text-[#D9D9D9]/70 mb-2 font-mono">Apoquindo 3000, Las Condes, Santiago — Chile.</p>
-                  <span className="text-xs font-mono text-brand-purple">Reuniones presenciales previa agenda.</span>
+                  <span className="text-xs font-mono text-brand-purple">Carrera 65B No. 2-73 / Medellin / Colombia</span>
                 </div>
               </div>
 
@@ -1766,9 +1681,8 @@ export default function App() {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5 text-brand-purple" />
-                    <h3 className="text-lg font-bold text-white">Escríbenos Directamente</h3>
+                    <h3 className="text-lg font-bold text-white">Escríbenos</h3>
                   </div>
-                  <span className="text-[10px] font-mono text-[#D9D9D9]/40 font-bold">TIEMPO RES.: &lt; 2 HORAS</span>
                 </div>
 
                 <form onSubmit={handleContactSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1815,29 +1729,7 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] font-mono text-[#D9D9D9]/50 uppercase mb-1.5 font-bold">Presupuesto Estimado ($ USD)</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { value: '1500-5000', label: '$1.5K - $5K' },
-                        { value: '5000-15000', label: '$5K - $15K' },
-                        { value: '15000+', label: '$15K+ (Grande)' }
-                      ].map(item => (
-                        <button
-                          key={item.value}
-                          type="button"
-                          onClick={() => setContactForm({ ...contactForm, budget: item.value })}
-                          className={`py-2 px-3 rounded-xl text-xs font-semibold cursor-pointer border transition-all duration-300 ${
-                            contactForm.budget === item.value
-                              ? 'bg-brand-purple/20 border-brand-purple text-white'
-                              : 'bg-white/[0.02] border-white/10 text-[#D9D9D9] hover:bg-white/5'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+
 
                   <div className="md:col-span-2">
                     <label className="block text-[10px] font-mono text-[#D9D9D9]/50 uppercase mb-1.5">Cuéntanos sobre tu Visión *</label>
@@ -1861,7 +1753,7 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={contactStatus.loading}
-                      className="w-full py-3.5 rounded-xl text-xs font-bold tracking-wider text-white bg-white hover:bg-white/95 text-brand-bg transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 shadow-xl"
+                      className="w-full py-3.5 rounded-xl text-xs font-bold tracking-wider text-white bg-gradient-to-r from-brand-blue via-brand-purple to-brand-orange hover:shadow-[0_0_25px_rgba(13,110,253,0.4)] hover:opacity-95 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 shadow-xl"
                     >
                       {contactStatus.loading ? (
                         <div className="w-4 h-4 border-2 border-brand-bg/30 border-t-brand-bg rounded-full animate-spin" />
@@ -1876,38 +1768,52 @@ export default function App() {
                 </form>
               </div>
 
-              {/* Highly polished static HQ Vector Map (Moved from Home Page) */}
-              <div className="mt-16 rounded-3xl overflow-hidden aspect-[21/9] w-full border border-white/10 bg-[#060B16] relative flex items-center justify-center">
-                {/* Styling background grids resembling map routes */}
-                <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px]" />
-                
-                {/* High Tech Location Nodes */}
-                <div className="absolute top-[40%] left-[35%] w-3 h-3 rounded-full bg-brand-blue animate-ping" />
-                <div className="absolute top-[40%] left-[35%] w-3.5 h-3.5 rounded-full bg-brand-blue border-2 border-white flex items-center justify-center" />
-                
-                <div className="absolute top-[50%] right-[30%] w-3 h-3 rounded-full bg-brand-purple animate-ping" />
-                <div className="absolute top-[50%] right-[30%] w-3.5 h-3.5 rounded-full bg-brand-purple border-2 border-white" />
 
-                {/* Float Info Box */}
-                <div className="relative z-10 glass-panel-heavy border border-white/10 p-6 rounded-2xl max-w-sm text-left shadow-2xl">
-                  <span className="text-[9px] font-mono tracking-widest text-[#D9D9D9]/50 uppercase block mb-1">CENTRO DE OPERACIONES</span>
-                  <h4 className="text-sm font-bold text-white mb-2">DIGITAL HOME</h4>
-                  <p className="text-[11px] text-[#D9D9D9]/70 leading-relaxed mb-4">
-                    Medellín - Colombia — Cobertura y proyectos internacionales en Latinoamérica y Europa.
-                  </p>
-                  <div className="flex flex-col gap-1 text-[10px] font-mono text-brand-blue">
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-brand-purple" />
-                      <span>Medellín, Colombia</span>
-                    </span>
-                    <span className="flex items-center gap-1.5 mt-1">
-                      <Phone className="w-3.5 h-3.5 text-brand-green" />
-                      <span>(+57) 322 613 87 73 (WhatsApp)</span>
-                    </span>
-                    <span className="flex items-center gap-1.5 mt-1">
-                      <Mail className="w-3.5 h-3.5 text-brand-blue" />
-                      <span>comercial@digitalhome.com</span>
-                    </span>
+            </motion.div>
+          )}
+
+          {/* INTERNAL PAGE: AGENDA & GOOGLE CALENDAR */}
+          {activePage === 'agenda' && (
+            <motion.div
+              key="page-agenda"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-7xl mx-auto px-4 md:px-8 py-12"
+            >
+
+
+              {/* Main Interactive Calendar Hub */}
+              <GoogleCalendarHub
+                hideHeader={true}
+                hideRightColumn={true}
+                onEventCreated={() => {
+                  console.log('Event booked via Agenda Page');
+                }}
+              />
+
+              {/* Tips for the discovery session */}
+              <div className="mt-16 p-8 rounded-3xl bg-gradient-to-r from-white/[0.02] to-white/[0.01] border border-white/10 text-left">
+                <h3 className="text-lg font-bold text-white mb-3">¿Cómo preparar tu sesión de consultoría técnica?</h3>
+                <p className="text-xs text-[#D9D9D9]/70 mb-6 leading-relaxed max-w-3xl">
+                  Para aprovechar al máximo los 30 minutos de diagnóstico gratuito con nuestros ingenieros y arquitectos de soluciones, te recomendamos tener a mano:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs text-[#D9D9D9]/80">
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-brand-blue font-mono font-bold block mb-1">01. Objetivos</span>
+                    <span>Metas clave de conversión, ventas o automatización de tu negocio.</span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-brand-purple font-mono font-bold block mb-1">02. Stack Actual</span>
+                    <span>Herramientas, CRM, plataformas web o bases de datos en uso.</span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-brand-orange font-mono font-bold block mb-1">03. Referencias</span>
+                    <span>Sitios web, aplicaciones o experiencias visuales de referencia.</span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-brand-green font-mono font-bold block mb-1">04. Plazos</span>
+                    <span>Tiempos estimados de lanzamiento y presupuesto proyectado.</span>
                   </div>
                 </div>
               </div>
@@ -1960,6 +1866,7 @@ export default function App() {
               { id: 'inicio', label: 'Inicio' },
               { id: 'nosotros', label: 'Nosotros' },
               { id: 'portafolio', label: 'Portafolio' },
+              { id: 'agenda', label: 'Agenda / Agendar Cita' },
               { id: 'blog', label: 'Blog' },
               { id: 'contacto', label: 'Contacto' },
             ].map(link => (
@@ -1999,9 +1906,9 @@ export default function App() {
           {/* Contact footer */}
           <div className="md:col-span-3 flex flex-col gap-3 text-xs text-[#D9D9D9]/80">
             <h4 className="text-xs font-mono tracking-widest text-[#D9D9D9]/50 uppercase">Contacto</h4>
-            <a href="mailto:comercial@digitalhome.com" className="flex items-center gap-2 hover:text-white transition-colors">
+            <a href="mailto:comercial@digitalhome.com.co" className="flex items-center gap-2 hover:text-white transition-colors">
               <Mail className="w-4 h-4 text-brand-blue" />
-              <span>comercial@digitalhome.com</span>
+              <span>comercial@digitalhome.com.co</span>
             </a>
             <a href="https://wa.me/573226138773" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
               <Phone className="w-4 h-4 text-brand-green" />
@@ -2036,26 +1943,6 @@ export default function App() {
             HABLAR CON ASESOR
           </span>
         </a>
-
-        {/* AI Agent chat bubble */}
-        <button
-          onClick={() => setAiChatOpen(!aiChatOpen)}
-          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer relative overflow-hidden ${
-            aiChatOpen ? 'bg-brand-red text-white' : 'bg-transparent text-white'
-          }`}
-          aria-label="Abrir consultor de Inteligencia Artificial DIGITAL HOME"
-        >
-          {aiChatOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <img
-              src="https://lh3.googleusercontent.com/d/1zIz_SP1EisJX1F9s4AyDPQiF2wyJbAj7"
-              alt="Asesor IA"
-              className="w-full h-full object-cover rounded-full animate-pulse"
-              referrerPolicy="no-referrer"
-            />
-          )}
-        </button>
       </div>
 
       {/* 6. AI Agent Chatbot Panel (Glassmorphism Slideover) */}
@@ -2376,12 +2263,233 @@ export default function App() {
                 <button
                   onClick={() => {
                     setActiveBlogModal(null);
-                    setBookingModalOpen(true);
+                    handleAgendarAsesoria();
                   }}
-                  className="px-6 py-3 rounded-xl text-xs font-bold text-brand-bg bg-white hover:bg-white/95 cursor-pointer"
+                  className="px-6 py-3 rounded-xl text-xs font-bold text-brand-bg bg-white hover:bg-white/95 cursor-pointer flex items-center gap-2"
                 >
-                  Asesorarme sobre este Tema
+                  <Calendar className="w-4 h-4" />
+                  <span>Agendar Asesoría</span>
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 9. EMBEDDED PROJECT / DOCUMENT VIEWER MODAL */}
+      <AnimatePresence>
+        {activeProjectModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveProjectModal(null)}
+              className="absolute inset-0 bg-brand-bg/85 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-6xl bg-[#060B16] border border-white/15 rounded-3xl p-3 sm:p-5 md:p-6 shadow-2xl z-10 text-left flex flex-col h-[92vh] max-h-[920px] overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10 shrink-0">
+                <div className="flex flex-col gap-1 pr-2 overflow-hidden">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2.5 py-0.5 bg-brand-blue/10 text-brand-blue border border-brand-blue/20 rounded-md text-[10px] font-mono font-bold uppercase">
+                      CLIENTE: {activeProjectModal.client}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#D9D9D9]/50 uppercase">
+                      {activeProjectModal.category}
+                    </span>
+                  </div>
+                  <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white truncate">
+                    {activeProjectModal.title}
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {activeProjectModal.projectUrl && (
+                    <a
+                      href={activeProjectModal.projectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/15 transition-colors flex items-center gap-1.5"
+                      title="Abrir en pestaña externa"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Pestaña externa</span>
+                    </a>
+                  )}
+                  <button
+                    onClick={() => setActiveProjectModal(null)}
+                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white cursor-pointer transition-colors"
+                    aria-label="Cerrar visor"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Simulated Browser Address Bar & Mode Tabs */}
+              <div className="mt-3 px-3 py-2 bg-[#02050D] border border-white/10 rounded-2xl flex flex-wrap items-center justify-between gap-2 shrink-0 text-xs">
+                {/* Dots & URL Bar */}
+                <div className="flex items-center gap-2 flex-grow overflow-hidden">
+                  <div className="hidden sm:flex items-center gap-1.5 mr-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80 inline-block"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500/80 inline-block"></span>
+                  </div>
+                  <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg flex items-center gap-2 text-[#D9D9D9]/70 font-mono text-[11px] truncate flex-grow max-w-md">
+                    <Lock className="w-3 h-3 text-green-400 shrink-0" />
+                    <span className="truncate">{activeProjectModal.projectUrl || activeProjectModal.title}</span>
+                  </div>
+                </div>
+
+                {/* Switcher Controls */}
+                <div className="flex items-center gap-1 shrink-0 bg-white/5 p-1 rounded-xl border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setModalViewTab('interactive')}
+                    className={`px-3 py-1 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                      modalViewTab === 'interactive'
+                        ? 'bg-brand-blue text-white shadow-md font-bold'
+                        : 'text-[#D9D9D9]/70 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Sitio / Doc Interactivo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalViewTab('hd')}
+                    className={`px-3 py-1 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                      modalViewTab === 'hd'
+                        ? 'bg-brand-blue text-white shadow-md font-bold'
+                        : 'text-[#D9D9D9]/70 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Captura HD</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* View Content Area */}
+              <div className="flex-grow my-3 rounded-2xl overflow-hidden border border-white/10 bg-slate-950 relative flex flex-col">
+                {modalViewTab === 'interactive' && activeProjectModal.projectUrl ? (
+                  activeProjectModal.projectUrl.includes('drive.google.com') ? (
+                    <div className="w-full h-full relative flex flex-col">
+                      <iframe
+                        src={getEmbedUrl(activeProjectModal.projectUrl)}
+                        title={activeProjectModal.title}
+                        className="w-full h-full border-0 bg-white"
+                        allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
+                      />
+                    </div>
+                  ) : (
+                    /* Live Website Interactive Card (Solves ERR_BLOCKED_BY_RESPONSE) */
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#080E1C] to-[#03060E] relative overflow-y-auto">
+                      {/* Background Screenshot with Overlay */}
+                      <div className="absolute inset-0 opacity-20 filter blur-sm pointer-events-none">
+                        <img
+                          src={activeProjectModal.imageUrl}
+                          alt={activeProjectModal.title}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+
+                      <div className="relative z-10 max-w-2xl w-full text-center flex flex-col items-center gap-5 p-6 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-2xl">
+                        {/* Live Status Badge */}
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-bold">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                          <span>SITIO WEB EN PRODUCCIÓN ACTIVA</span>
+                        </div>
+
+                        {/* Title & Domain */}
+                        <div>
+                          <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+                            {activeProjectModal.title}
+                          </h3>
+                          <p className="text-xs font-mono text-brand-blue flex items-center justify-center gap-1.5">
+                            <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>{activeProjectModal.projectUrl}</span>
+                          </p>
+                        </div>
+
+                        {/* Mockup Preview Card */}
+                        <div className="w-full aspect-[16/9] max-h-56 rounded-2xl overflow-hidden border border-white/15 shadow-xl group relative">
+                          <img
+                            src={activeProjectModal.imageUrl}
+                            alt={activeProjectModal.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+                            <span className="text-xs font-semibold text-white/90">Vista previa interactiva HD</span>
+                          </div>
+                        </div>
+
+                        {/* Explanation Notice regarding X-Frame-Options */}
+                        <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-[#D9D9D9]/80 text-left flex items-start gap-2.5">
+                          <Info className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
+                          <p className="leading-relaxed">
+                            Por políticas de seguridad del servidor del cliente (<strong>X-Frame-Options / CORS</strong>), las páginas web activas no admiten visualización incrustada dentro de marcos externos. Puedes explorar el sitio web directamente en vivo o ver la captura en alta resolución.
+                          </p>
+                        </div>
+
+                        {/* CTA Action Buttons */}
+                        <div className="flex flex-wrap items-center justify-center gap-3 w-full pt-2">
+                          <a
+                            href={activeProjectModal.projectUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-6 py-3 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white font-bold text-xs md:text-sm transition-all shadow-lg shadow-brand-blue/25 flex items-center gap-2 cursor-pointer"
+                          >
+                            <Globe className="w-4 h-4" />
+                            <span>Abrir {activeProjectModal.client} en Vivo</span>
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => setModalViewTab('hd')}
+                            className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition-colors flex items-center gap-2 cursor-pointer border border-white/15"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                            <span>Ver Captura HD</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 overflow-auto bg-slate-900/60">
+                    <img
+                      src={activeProjectModal.imageUrl}
+                      alt={activeProjectModal.title}
+                      className="max-w-full max-h-[72vh] object-contain rounded-xl shadow-2xl border border-white/10"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="mt-3 text-xs font-mono text-[#D9D9D9]/60">Captura de pantalla HD oficial - {activeProjectModal.client}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer Details */}
+              <div className="pt-3 border-t border-white/10 shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+                <div className="flex-grow">
+                  <p className="text-[#D9D9D9]/80 line-clamp-2">{activeProjectModal.description}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="px-3 py-1 rounded-lg bg-brand-blue/10 border border-brand-blue/20 text-brand-blue font-semibold flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>{activeProjectModal.result}</span>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -2414,13 +2522,29 @@ export default function App() {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-2">
                 <Calendar className="w-5 h-5 text-brand-blue" />
-                <h3 className="text-lg font-bold text-white">Agendar Asesoría Técnica</h3>
+                <h3 className="text-lg font-bold text-white">Agendar Asesoría</h3>
               </div>
-              <p className="text-xs text-[#D9D9D9]/70 mb-6">
-                Selecciona la fecha y la hora ideal para una videollamada de descubrimiento técnico gratuita de 15 minutos en Google Meet.
+              <p className="text-xs text-[#D9D9D9]/70 mb-4">
+                Programa tu videollamada de descubrimiento técnico gratuita de 15 minutos en Google Meet.
               </p>
+
+              {/* Direct Google Calendar Hub shortcut */}
+              <div className="mb-4 p-3 rounded-2xl bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-between gap-3">
+                <div className="text-left">
+                  <span className="text-[10px] font-mono text-brand-blue uppercase font-bold block">Sincronización en Vivo</span>
+                  <span className="text-xs text-white">¿Deseas gestionar citas directamente con tu cuenta de Google?</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAgendarAsesoria}
+                  className="px-3 py-1.5 rounded-xl bg-brand-blue hover:bg-brand-blue/80 text-white font-bold text-[10px] whitespace-nowrap cursor-pointer transition-all shadow-md flex items-center gap-1.5 shrink-0"
+                >
+                  <Calendar className="w-3 h-3" />
+                  <span>Agendar Asesoría</span>
+                </button>
+              </div>
 
               <form onSubmit={handleBookConsultation} className="flex flex-col gap-4">
                 {/* Service selector */}
@@ -2500,8 +2624,19 @@ export default function App() {
                 </div>
 
                 {schedulerStatus.message && (
-                  <div className={`p-3 rounded-xl text-xs font-semibold ${schedulerStatus.success ? 'bg-brand-green/10 text-brand-green' : 'bg-brand-red/10 text-brand-red'}`}>
-                    {schedulerStatus.message}
+                  <div className={`p-3.5 rounded-xl text-xs flex flex-col gap-2 font-medium ${schedulerStatus.success ? 'bg-brand-green/10 text-brand-green border border-brand-green/30' : 'bg-brand-red/10 text-brand-red border border-brand-red/30'}`}>
+                    <span>{schedulerStatus.message}</span>
+                    {schedulerStatus.googleCalendarUrl && (
+                      <a
+                        href={schedulerStatus.googleCalendarUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-green text-brand-bg font-bold text-[11px] self-start hover:opacity-90 transition-opacity"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Añadir a Google Calendar</span>
+                      </a>
+                    )}
                   </div>
                 )}
 
@@ -2510,7 +2645,7 @@ export default function App() {
                   disabled={schedulerStatus.loading}
                   className="w-full mt-2 py-3.5 rounded-xl text-xs font-bold bg-gradient-to-r from-brand-blue to-brand-purple text-white cursor-pointer shadow-lg"
                 >
-                  Confirmar Asesoría
+                  Agendar Asesoría
                 </button>
               </form>
             </motion.div>

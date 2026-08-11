@@ -38,6 +38,7 @@ export interface PortfolioItem {
   result: string;
   imageUrl: string;
   tags: string[];
+  projectUrl?: string;
 }
 
 export interface BlogArticle {

@@ -1,6 +1,6 @@
 {
   "name": "Remix NOVA Soluciones Digitales",
-  "description": "Agencia premium de transformación digital, desarrollo web, comercio electrónico, inteligencia artificial, software a medida y branding corporativo.",
+  "description": "Agencia premium de transformación digital, desarrollo web, comercio electrónico, inteligencia artificial, software a medida y sincronización de eventos con Google Calendar y Google Meet.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

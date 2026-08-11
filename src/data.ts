@@ -5,7 +5,7 @@ export const SERVICES_DATA: ServiceDetail[] = [
     id: 'branding',
     title: 'Branding de Marca',
     tagline: 'CONSTRUIMOS MARCAS MEMORABLES',
-    description: 'Diseñamos identidades visuales sólidas que transmiten confianza y diferencian a nuestros clientes de la competencia.',
+    description: 'Desarrollamos identidades visuales estratégicas que diferencian tu empresa en el mercado. Diseñamos logotipos, manuales de marca, paletas de color, tipografías y todo el ecosistema visual necesario para que tu negocio proyecte profesionalismo, credibilidad y una imagen sólida desde el primer contacto.',
     color: '#60AB26', // Green
     iconName: 'Sparkles',
     benefits: [
@@ -29,7 +29,7 @@ export const SERVICES_DATA: ServiceDetail[] = [
     id: 'web',
     title: 'Páginas Web Corporativas',
     tagline: 'DISEÑAMOS SITIOS WEB MODERNOS',
-    description: 'Cada página está optimizada para transmitir confianza, captar clientes y posicionar la marca.',
+    description: 'Diseñamos y desarrollamos páginas web modernas, rápidas y optimizadas para convertir visitantes en clientes. Creamos sitios completamente responsivos, optimizados para Google (SEO), con excelente experiencia de usuario y adaptados a los objetivos comerciales de cada empresa.',
     color: '#F7AA03', // Yellow
     iconName: 'Globe',
     benefits: [
@@ -53,7 +53,7 @@ export const SERVICES_DATA: ServiceDetail[] = [
     id: 'ecommerce',
     title: 'Tiendas Online',
     tagline: 'PLATAFORMAS DE COMERCIO ELECTRÓNICO',
-    description: 'Ideal para vender tus productos 24/7 de forma online con todos los medios de pago disponibles de forma segura.',
+    description: 'Creamos tiendas virtuales seguras, intuitivas y fáciles de administrar. Integramos pasarelas de pago, gestión de inventario, envíos y herramientas de marketing para que tu negocio pueda vender en línea de forma eficiente y ofrecer una experiencia de compra excepcional.',
     color: '#DE4C00', // Orange
     iconName: 'ShoppingBag',
     benefits: [
@@ -76,8 +76,8 @@ export const SERVICES_DATA: ServiceDetail[] = [
   {
     id: 'ai',
     title: 'Agentes IA',
-    tagline: 'AGENTES DE IA 24/7',
-    description: 'Desarrollamos asistentes inteligentes entrenados para vender, atender clientes y automatizar procesos.',
+    tagline: 'Automatiza la atención, las ventas y el crecimiento de tu empresa.',
+    description: 'Desarrollamos agentes inteligentes que atienden clientes 24/7, responden preguntas, califican prospectos, agendan citas, realizan seguimiento comercial y automatizan procesos a través de WhatsApp, sitios web y múltiples canales, mejorando la productividad y aumentando las oportunidades de venta.',
     color: '#044FCD', // Blue
     iconName: 'Cpu',
     benefits: [
@@ -100,8 +100,8 @@ export const SERVICES_DATA: ServiceDetail[] = [
   {
     id: 'software',
     title: 'Software a Medida',
-    tagline: 'SOLUCIONES DIGITALES EMPRESARIALES',
-    description: 'Diseñamos plataformas empresariales completamente personalizadas según las necesidades de la empresa.',
+    tagline: 'Soluciones tecnológicas creadas para tu empresa.',
+    description: 'Desarrollamos software a la medida que se adapta completamente a las necesidades de tu negocio. Creamos plataformas administrativas, sistemas empresariales, aplicaciones web, automatizaciones e integraciones que optimizan procesos, mejoran la eficiencia y facilitan el crecimiento de tu organización.',
     color: '#6A1EB3', // Purple
     iconName: 'Code2',
     benefits: [
@@ -125,7 +125,7 @@ export const SERVICES_DATA: ServiceDetail[] = [
     id: 'merch',
     title: 'Merchandising',
     tagline: 'HAZ QUE TU MARCA SE VEA Y GENERE IMPACTO',
-    description: 'Producimos material corporativo personalizado para que tu marca transmita confianza y profesionalismo.',
+    description: 'Diseñamos y producimos material corporativo personalizado que fortalece la identidad de tu empresa. Elaboramos papelería empresarial, tarjetas de presentación, uniformes, empaques, pendones, adhesivos, material P.O.P., artículos promocionales y soluciones publicitarias que generan recordación y proyectan una imagen profesional.',
     color: '#FF1D1D', // Red
     iconName: 'Award',
     benefits: [
@@ -141,56 +141,162 @@ export const SERVICES_DATA: ServiceDetail[] = [
       { phase: '04', title: 'Implementamos', description: 'Control de calidad estricto y entrega del material corporativo final listo para usar.' }
     ],
     faq: [
-      { question: '¿Producen uniformes y empaques con el logotipo impreso?', answer: 'Sí, nos encargamos de todo el proceso de diseño, selección de insumos de alta calidad y producción terminada de uniformes, bolsas, cajas y regalos corporativos.' },
-      { question: '¿Tienen cobertura de entrega?', answer: 'Contamos con envíos y logística de distribución nacional en Colombia, Chile y envíos corporativos internacionales.' }
+      { question: '¿Tienen cobertura de entrega?', answer: 'Contamos con envíos y logística de distribución a toda Colombia y envíos corporativos internacionales.' }
     ]
   }
 ];
 
 export const PORTFOLIO_DATA: PortfolioItem[] = [
+  // PÁGINAS WEB
   {
     id: 'p1',
-    title: 'Ecosistema Digital Corporativo',
-    client: 'DIGITAL HOME',
-    category: 'Páginas Web / Branding',
+    title: 'PAGINA WEB EMPRESARIAL',
+    client: 'LOGICOMEX',
+    category: 'Páginas Web',
     serviceId: 'web',
     description: 'Desarrollo de ecosistema digital de alta velocidad con identidad de marca memorable y componentes animados en 3D para una experiencia inmersiva.',
     result: 'Generación acelerada de clientes, velocidad de carga instantánea y posicionamiento de marca de vanguardia.',
-    imageUrl: 'https://lh3.googleusercontent.com/d/13_pJH4OVTJC1K-WVamiY9c5M81fPcT6H',
+    imageUrl: 'https://lh3.googleusercontent.com/d/16s4c_zh-Vb8MLLMulTTUZ7L9tdJEIAg2',
+    projectUrl: 'https://www.logicomex.com.co/',
     tags: ['React', 'Next.js', 'Branding', 'SEO']
   },
   {
-    id: 'p2',
-    title: 'Agente Cognitivo IA 24/7',
-    client: 'DIGITAL HOME AI Division',
-    category: 'Agentes IA',
-    serviceId: 'ai',
-    description: 'Integración de asistente virtual inteligente con modelo de lenguaje entrenado para calificación de prospectos, atención al cliente y agendamiento automático en WhatsApp.',
-    result: 'Atención ininterrumpida las 24 horas y reducción del 80% en tiempo de respuesta comercial.',
-    imageUrl: 'https://lh3.googleusercontent.com/d/1Dcrwwk7ihJtrPiYWk_YNgxin8J6uYwaI',
-    tags: ['Gemini IA', 'WhatsApp API', 'CRM', 'Automatización']
+    id: 'p5',
+    title: 'PAGINA WEB EMPRESARIAL',
+    client: 'FUNDELIBERTAD',
+    category: 'Páginas Web',
+    serviceId: 'web',
+    description: 'Plataforma web empresarial con arquitectura optimizada para generación de clientes y posicionamiento orgánico.',
+    result: 'Crecimiento exponencial de visitas orgánicas.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/178Pcr1n_8YGJ8XHrboyxQ5Upk1f5FjPG',
+    projectUrl: 'https://www.fundelibertad.org/',
+    tags: ['SEO', 'Web Corporate', 'UI/UX']
   },
   {
+    id: 'p6',
+    title: 'PAGINA WEB EMPRESARIAL',
+    client: 'ADUACOL',
+    category: 'Páginas Web',
+    serviceId: 'web',
+    description: 'Sitio de respuesta ultrarrápida enfocado en optimizar el retorno de inversión en campañas digitales.',
+    result: 'Aumento significativo en conversión de prospectos.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1_E0aOn_LCjIA1A3AwobjozKzqnA2YK-J',
+    projectUrl: 'https://www.aduacol.com.co/',
+    tags: ['Conversion', 'React', 'Speed']
+  },
+
+  // BRANDING
+  {
+    id: 'b1',
+    title: 'BRANDING CORPORATIVO',
+    client: 'YALUK',
+    category: 'Branding',
+    serviceId: 'branding',
+    description: 'Desarrollo de identidad corporativa integral con manual de marca y estrategia visual gráfica.',
+    result: 'Reposicionamiento institucional de marca.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1aeiUiA07gREqQ3XVskDSzZjCaizFpRHh',
+    projectUrl: 'https://drive.google.com/file/d/1zNqwjhuwmjbdS_xhXIlOkKaQW8pxL3vX/view?usp=sharing',
+    tags: ['Branding', 'Logotipo', 'Vector']
+  },
+  {
+    id: 'b2',
+    title: 'BRANDING CORPORATIVO',
+    client: 'UNI',
+    category: 'Branding',
+    serviceId: 'branding',
+    description: 'Modernización de línea gráfica y definición cromática para firma financiera.',
+    result: 'Aumento en percepción de confianza y estatus.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1VpSBYEcx1cWO3qzoAK6xeAjnOd0A01_O',
+    projectUrl: 'https://drive.google.com/file/d/1T9mfjr1knXC_TZzC3sGAesUCVYzUzCP2/view?usp=drive_link',
+    tags: ['Rebranding', 'Design System', 'UI']
+  },
+  {
+    id: 'b3',
+    title: 'BRANDING CORPORATIVO',
+    client: 'VALTEXA',
+    category: 'Branding',
+    serviceId: 'branding',
+    description: 'Creación de marca corporativa, tarjetas de lujo y guías de uso de marca.',
+    result: 'Consistencia de marca en todos los canales.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1mkRmIEhJs9iLm_zXIKpkJmfZPovnceDe',
+    projectUrl: 'https://drive.google.com/file/d/1tWj9TC7xGtVD1d59MsiSORzySLvgenz1/view?usp=sharing',
+    tags: ['Brand Identity', 'Print', 'Typography']
+  },
+
+  // TIENDAS ONLINE / E-COMMERCE
+  {
     id: 'p3',
-    title: 'Plataforma de Comercio Electrónico',
-    client: 'E-Commerce Enterprise',
+    title: 'TIENDA ONLINE 24/7',
+    client: 'livestronger',
     category: 'Tiendas Online',
     serviceId: 'ecommerce',
     description: 'Construcción de plataforma e-commerce con catálogo interactivo, carrito de compras sin fricción y pasarela de pagos segura.',
     result: 'Incremento del 120% en ventas en línea y conversión optimizada en dispositivos móviles.',
-    imageUrl: 'https://lh3.googleusercontent.com/d/10DT70pkZ5c4cftWpLa05rmQkp2-kRHrc',
+    imageUrl: 'https://lh3.googleusercontent.com/d/10rU1YuVPi7hxdvbs7Rwvhe-Y762guvTL',
+    projectUrl: 'https://www.livestronger.shop/',
     tags: ['E-Commerce', 'Pasarelas de Pago', 'Mobile First', 'SSL']
   },
   {
-    id: 'p4',
-    title: 'Sistema ERP & Dashboard a Medida',
-    client: 'Empresa Industrial',
-    category: 'Software a Medida',
-    serviceId: 'software',
-    description: 'Desarrollo de plataforma administrativa personalizada con módulos de inventarios, facturación y dashboards ejecutivos en tiempo real.',
-    result: 'Automatización total de procesos internos y control en tiempo real de la operación.',
-    imageUrl: 'https://lh3.googleusercontent.com/d/1KTjnwlBvNcbTwcSIHpJOB23_6nzH0b25',
-    tags: ['CRM / ERP', 'Dashboards', 'React', 'Node.js']
+    id: 'e2',
+    title: 'TIENDA ONLINE 24/7',
+    client: 'TELOCALIZO',
+    category: 'Tiendas Online',
+    serviceId: 'ecommerce',
+    description: 'Plataforma e-commerce optimizada para moda con gestión de variaciones de stock y pasarelas automáticas.',
+    result: 'Aumento del 85% en ventas recurrentes.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1DkmVna_KkU9Kmqs4jEPoU9Z-GJ-FZr9G',
+    projectUrl: 'https://telocalizo.co/',
+    tags: ['Checkout', 'Stripe', 'Mercado Pago']
+  },
+  {
+    id: 'e3',
+    title: 'TIENDA ONLINE 24/7',
+    client: 'NOEMI COLOMBIA',
+    category: 'Tiendas Online',
+    serviceId: 'ecommerce',
+    description: 'Catálogo mayorista con precios dinámicos y pedidos automatizados.',
+    result: 'Procesamiento de pedidos 100% automatizado.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1oPXruHxNzKkFIp8tD2XjsY6PawoBKLtk',
+    projectUrl: 'https://www.noemiprofesional.com/',
+    tags: ['B2B', 'Catalog', 'E-Commerce']
+  },
+
+  // MERCHANDISING
+  {
+    id: 'm1',
+    title: 'ROLL UP CORPORATIVO',
+    client: 'BURGERKING',
+    category: 'Merchandising',
+    serviceId: 'merch',
+    description: 'Producción de papelería empresarial, carpetas, libretas y regalos corporativos personalizados.',
+    result: 'Impacto visual premium en eventos de la industria.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1IOdBSybKeHMXVhVr7S2QWcsgkNaxENbl',
+    projectUrl: 'https://drive.google.com/file/d/1IOdBSybKeHMXVhVr7S2QWcsgkNaxENbl/view?usp=drive_link',
+    tags: ['Print', 'Merchandising', 'Corporate']
+  },
+  {
+    id: 'm2',
+    title: 'ACTIVACION DE MARCA',
+    client: 'ANTIOXLAB',
+    category: 'Merchandising',
+    serviceId: 'merch',
+    description: 'Diseño estructural de bolsas, cajas de lujo y material promocional de marca.',
+    result: 'Experiencia unboxing memorable para clientes.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1MAxU-OZSjFX3ertdcRlJ2pHNioT1hdrp',
+    projectUrl: 'https://drive.google.com/file/d/1MAxU-OZSjFX3ertdcRlJ2pHNioT1hdrp/view?usp=drive_link',
+    tags: ['Packaging', 'Empaques', 'Design']
+  },
+  {
+    id: 'm3',
+    title: 'LAPICEROS CORPORATIVOS',
+    client: 'SUMINISTROS AEREOS',
+    category: 'Merchandising',
+    serviceId: 'merch',
+    description: 'Confección de prendas corporativas con bordado técnico y elementos P.O.P. gran formato.',
+    result: 'Estandarización de imagen del personal.',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1ufYXOcR-1yxBgQ90FRGay_UbDfq36VM9',
+    projectUrl: 'https://drive.google.com/file/d/1ufYXOcR-1yxBgQ90FRGay_UbDfq36VM9/view?usp=drive_link',
+    tags: ['Uniformes', 'POP', 'Brand Image']
   }
 ];
 
@@ -279,7 +385,7 @@ export const BLOG_DATA: BlogArticle[] = [
     readTime: '4 min lectura',
     summary: 'Descubre cómo los asistentes virtuales de IA entrenados con tus datos pueden calificar prospectos y agendar citas de forma automática en WhatsApp y web.',
     content: 'Los asistentes virtuales inteligentes están revolucionando la forma en que las empresas atienden a sus clientes. A diferencia de los bots tradicionales rígidos, los Agentes de Inteligencia Artificial de DIGITAL HOME entienden el lenguaje natural, responden dudas con el tono exacto de tu marca, califican prospectos y registran datos directamente en tu CRM. Esto garantiza una atención comercial inmediata 24/7 sin perder oportunidades de venta.',
-    imageUrl: 'https://lh3.googleusercontent.com/d/1Dcrwwk7ihJtrPiYWk_YNgxin8J6uYwaI'
+    imageUrl: 'https://lh3.googleusercontent.com/d/1HsB-L3GzSnzB3n7-gm5KUGrkhlqkkJKs'
   },
   {
     id: 'b2',
@@ -289,7 +395,7 @@ export const BLOG_DATA: BlogArticle[] = [
     readTime: '5 min lectura',
     summary: 'En DIGITAL HOME no creamos páginas aisladas; integramos estrategia, diseño, tecnología y automatización para generar resultados medibles.',
     content: 'Una página web bonita no es suficiente si no está conectada a un ecosistema estratégico. Para que la inversión en tecnología genere retorno real, debe combinar un diseño 100% personalizado, carga rápida, integración con WhatsApp y formularios inteligentes que capturen clientes. Conoce la metodología de DIGITAL HOME para construir sistemas digitales completos.',
-    imageUrl: 'https://lh3.googleusercontent.com/d/13_pJH4OVTJC1K-WVamiY9c5M81fPcT6H'
+    imageUrl: 'https://lh3.googleusercontent.com/d/13_HTBZd3yRZ4WsMlmp0QNjZwq65Yt9tn'
   },
   {
     id: 'b3',
@@ -299,7 +405,7 @@ export const BLOG_DATA: BlogArticle[] = [
     readTime: '4 min lectura',
     summary: 'Alinear tu identidad de marca digital con merchandising corporativo de alta calidad genera confianza y recordación constante en tus clientes.',
     content: 'El valor percibido de una empresa aumenta drásticamente cuando existe coherencia entre su presencia digital y su presentación física. Desde el Manual de Identidad hasta empaques, papelería y uniformes corporativos, proyectar profesionalismo en cada punto de contacto con el cliente marca la diferencia competitiva.',
-    imageUrl: 'https://lh3.googleusercontent.com/d/1O-ttOZgUT_7fvWpJ21d0T7HHM6eyS6b0'
+    imageUrl: 'https://lh3.googleusercontent.com/d/1GQcKFlCaVY5Ofwolx0MoubLu-PFQJWwf'
   }
 ];
 
