@@ -1,13 +1,119 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    
+    <!-- Primary Page Title & Meta Description -->
+    <title>Remix NOVA Soluciones Digitales | Agencia de Transformación Digital & Software</title>
+    <meta
+      name="description"
+      content="Agencia premium de transformación digital, desarrollo web, comercio electrónico, inteligencia artificial, software a medida y sincronización de eventos con Google Calendar y Google Meet."
+    />
+    <meta name="keywords" content="desarrollo web, branding de marca, tiendas online, agentes ia, software a medida, merchandising, google analytics, google search console, google tag manager, colombia, marketing digital" />
+    <meta name="author" content="DIGITAL HOME & NOVA Soluciones Digitales" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+    <!-- Google Search Console Verification Meta Tag -->
+    <meta name="google-site-verification" id="google-search-console-meta" content="UXeoqnpWKG6kHkNBD15bAWtB0X3ZayqnnbMAAbtB8Hk" />
+
+    <!-- OpenGraph Social Cards -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:site_name" content="NOVA Soluciones Digitales" />
+    <meta property="og:title" content="Remix NOVA Soluciones Digitales | Transformación Digital y Software" />
+    <meta
+      property="og:description"
+      content="Creamos ecosistemas digitales de alto impacto: Branding, Páginas Web de Alto Rendimiento, Tiendas Online, Agentes IA y Software a Medida."
+    />
+    <meta property="og:image" content="https://lh3.googleusercontent.com/d/1HsB-L3GzSnzB3n7-gm5KUGrkhlqkkJKs" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Remix NOVA Soluciones Digitales | Agencia de Transformación Digital" />
+    <meta
+      name="twitter:description"
+      content="Agencia premium de transformación digital, desarrollo web, ecommerce, agentes IA y software a medida."
+    />
+    <meta name="twitter:image" content="https://lh3.googleusercontent.com/d/1HsB-L3GzSnzB3n7-gm5KUGrkhlqkkJKs" />
+
+    <!-- Schema.org JSON-LD Structured Data for Search Console & Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "Remix NOVA Soluciones Digitales",
+      "alternateName": "DIGITAL HOME",
+      "description": "Agencia premium de transformación digital, desarrollo web corporativo, ecommerce, agentes de inteligencia artificial y software a medida.",
+      "url": "https://digitalhome.com.co",
+      "telephone": "+573000000000",
+      "priceRange": "$$$",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "CO"
+      },
+      "sameAs": [
+        "https://instagram.com/dhpublicidadgrafica",
+        "https://facebook.com/dhpublicidadgrafica"
+      ],
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "USD",
+        "highPrice": "50000",
+        "lowPrice": "450",
+        "offerCount": "6"
+      }
+    }
+    </script>
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-PZFVRVJD');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Google tag (gtag.js) - Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2V03PTR10S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ window.dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-2V03PTR10S', { send_page_view: false });
+
+      // Dynamic config override from localStorage if customized in UI
+      try {
+        var savedCfg = localStorage.getItem('dh_nova_google_analytics_config');
+        if (savedCfg) {
+          var parsed = JSON.parse(savedCfg);
+          if (parsed && parsed.searchConsoleCode) {
+            var metaGsc = document.getElementById('google-search-console-meta');
+            if (metaGsc) metaGsc.setAttribute('content', parsed.searchConsoleCode);
+          }
+          if (parsed && parsed.gaMeasurementId && parsed.gaMeasurementId !== 'G-2V03PTR10S' && parsed.gaMeasurementId.startsWith('G-')) {
+            var gaCustomScript = document.createElement('script');
+            gaCustomScript.async = true;
+            gaCustomScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + parsed.gaMeasurementId;
+            document.head.appendChild(gaCustomScript);
+            gtag('config', parsed.gaMeasurementId, { send_page_view: false });
+          }
+        }
+      } catch (e) {
+        console.warn('Analytics custom override init:', e);
+      }
+    </script>
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript id="gtm-noscript">
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PZFVRVJD"
+        height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

@@ -38,7 +38,9 @@ import {
   Video,
   Lock,
   Info,
-  Image as ImageIcon
+  Image as ImageIcon,
+  BarChart3,
+  FileText
 } from 'lucide-react';
 
 import { ServiceId, ServiceDetail, PortfolioItem, BlogArticle, ChatMessage } from './types';
@@ -54,6 +56,16 @@ import {
 import ChameleonCanvas from './components/ChameleonCanvas';
 import ChameleonVideoPlayer from './components/ChameleonVideoPlayer';
 import GoogleCalendarHub from './components/GoogleCalendarHub';
+import GoogleToolsModal from './components/GoogleToolsModal';
+import {
+  initGoogleSuite,
+  trackPageView,
+  trackEvent,
+  trackContactLead,
+  trackAppointmentScheduled,
+  trackWhatsAppClick,
+  trackPortfolioInteraction
+} from './services/analytics';
 
 export type PageType = ServiceId | 'inicio' | 'nosotros' | 'contacto' | 'blog' | 'portafolio' | 'agenda';
 
@@ -119,10 +131,39 @@ export default function App() {
   const [activeBlogModal, setActiveBlogModal] = useState<BlogArticle | null>(null);
   const [activeProjectModal, setActiveProjectModal] = useState<PortfolioItem | null>(null);
   const [modalViewTab, setModalViewTab] = useState<'interactive' | 'hd'>('interactive');
+  const [googleToolsOpen, setGoogleToolsOpen] = useState(false);
+
+  // Initialize Google Analytics, Tag Manager & Search Console
+  useEffect(() => {
+    initGoogleSuite();
+  }, []);
+
+  // Track virtual page views for GA4 & GTM dataLayer on page navigation
+  useEffect(() => {
+    const currentPath = PAGE_TO_PATH[activePage] || '/';
+    const pageTitles: Record<PageType, string> = {
+      inicio: 'Remix NOVA Soluciones Digitales | Transformación Digital & Software',
+      nosotros: 'Nosotros | Remix NOVA Soluciones Digitales',
+      branding: 'Branding de Marca | Remix NOVA',
+      web: 'Páginas Web Corporativas | Remix NOVA',
+      ecommerce: 'Tiendas Online | Remix NOVA',
+      ai: 'Agentes IA | Remix NOVA',
+      software: 'Software a Medida | Remix NOVA',
+      merch: 'Merchandising & Packaging | Remix NOVA',
+      portafolio: 'Portafolio de Proyectos | Remix NOVA',
+      contacto: 'Contacto Estratégico | Remix NOVA',
+      blog: 'Blog de Innovación & Tech | Remix NOVA',
+      agenda: 'Agendar Asesoría Google Calendar | Remix NOVA',
+    };
+    const title = pageTitles[activePage] || 'Remix NOVA Soluciones Digitales';
+    document.title = title;
+    trackPageView(currentPath, title);
+  }, [activePage]);
 
   const openProjectModal = (item: PortfolioItem) => {
     setModalViewTab('interactive');
     setActiveProjectModal(item);
+    trackPortfolioInteraction(item.title, item.category);
   };
 
   const getEmbedUrl = (url?: string) => {
@@ -308,6 +349,12 @@ export default function App() {
           message: data.message,
           googleCalendarUrl: data.googleCalendarUrl
         });
+        trackAppointmentScheduled({
+          name: schedulerForm.name,
+          service: schedulerService,
+          date: selectedDate,
+          time: selectedTime,
+        });
         setSchedulerForm({ name: '', email: '', company: '', message: '' });
         // Close modal after delay if open
         setTimeout(() => {
@@ -342,6 +389,11 @@ export default function App() {
 
       if (response.ok) {
         setContactStatus({ success: true, message: data.message });
+        trackContactLead({
+          name: contactForm.name,
+          service: contactForm.budget || 'General',
+          budget: contactForm.budget,
+        });
         setContactForm({ name: '', email: '', phone: '', company: '', message: '', budget: '1500-5000' });
       } else {
         throw new Error(data.error || 'Error al enviar');
@@ -436,9 +488,15 @@ export default function App() {
                 className="md:h-22 h-16 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(13,110,253,0.3)] group-hover:scale-105 transition-transform duration-300"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const fb = document.getElementById('header-logo-fallback');
-                  if (fb) fb.style.display = 'flex';
+                  const target = e.currentTarget;
+                  if (!target.dataset.triedLocal) {
+                    target.dataset.triedLocal = 'true';
+                    target.src = '/assets/digital_home_logo.png';
+                  } else {
+                    target.style.display = 'none';
+                    const fb = document.getElementById('header-logo-fallback');
+                    if (fb) fb.style.display = 'flex';
+                  }
                 }}
               />
               <div id="header-logo-fallback" className="hidden items-center gap-3">
@@ -524,7 +582,15 @@ export default function App() {
           </nav>
 
           {/* Header Action Button */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => setGoogleToolsOpen(true)}
+              className="p-2.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-amber-400 hover:text-amber-300 hover:border-amber-400/50 transition-all duration-300 cursor-pointer flex items-center gap-1.5"
+              title="Google Analytics, Search Console & Tag Manager"
+            >
+              <BarChart3 className="w-4 h-4 text-amber-400" />
+              <span className="hidden lg:inline text-[11px] text-slate-300">Google Suite</span>
+            </button>
             <button
               onClick={handleAgendarAsesoria}
               className="px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide bg-gradient-to-r from-brand-blue to-brand-purple hover:shadow-[0_0_20px_rgba(13,110,253,0.3)] transition-all duration-300 cursor-pointer flex items-center gap-2 text-white"
@@ -608,9 +674,20 @@ export default function App() {
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
+                  setGoogleToolsOpen(true);
+                }}
+                className="w-full py-2.5 rounded-xl text-center text-xs font-semibold bg-slate-900 border border-slate-700 text-amber-400 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <BarChart3 className="w-4 h-4 text-amber-400" />
+                <span>Google Suite (Analytics, GTM & Search Console)</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
                   handleAgendarAsesoria();
                 }}
-                className="w-full mt-2 py-3 rounded-xl text-center text-sm font-semibold bg-gradient-to-r from-brand-blue to-brand-purple cursor-pointer"
+                className="w-full mt-1 py-3 rounded-xl text-center text-sm font-semibold bg-gradient-to-r from-brand-blue to-brand-purple cursor-pointer text-white"
               >
                 Agendar Asesoría
               </button>
@@ -837,9 +914,10 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
                   <div className="lg:col-span-7 order-2 lg:order-1 flex justify-center">
                     <ChameleonVideoPlayer
-                      videoSrc="https://drive.google.com/file/d/1qjR_IlGr-zvkQtxrWqqKCDmxcT0qkLT_/view?usp=sharing"
-                      posterSrc="https://lh3.googleusercontent.com/d/1qjR_IlGr-zvkQtxrWqqKCDmxcT0qkLT_"
-                      title="Video Inmersivo de DIGITAL HOME"
+                      videoSrc="/assets/chameleon_guardian_video.mp4"
+                      posterSrc="/assets/chameleon_poster.png"
+                      title="El Guardián KAMALEON de DIGITAL HOME"
+                      subtitle="VIDEO INMERSIVO • GUARDIÁN BIOMIMÉTICO"
                     />
                   </div>
 
@@ -1843,9 +1921,15 @@ export default function App() {
                 className="md:h-18 h-13 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(13,110,253,0.3)] hover:scale-105 transition-transform duration-300 mx-auto md:mx-0"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const fb = document.getElementById('footer-logo-fallback');
-                  if (fb) fb.style.display = 'flex';
+                  const target = e.currentTarget;
+                  if (!target.dataset.triedLocal) {
+                    target.dataset.triedLocal = 'true';
+                    target.src = '/assets/digital_home_logo.png';
+                  } else {
+                    target.style.display = 'none';
+                    const fb = document.getElementById('footer-logo-fallback');
+                    if (fb) fb.style.display = 'flex';
+                  }
                 }}
               />
               <div id="footer-logo-fallback" className="hidden items-center justify-center md:justify-start gap-2">
@@ -1920,25 +2004,71 @@ export default function App() {
             </span>
           </div>
         </div>
+
+        {/* Sub-footer: Google Suite, SEO & Legal */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8 mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#D9D9D9]/60">
+          <div>
+            © {new Date().getFullYear()} NOVA Soluciones Digitales & DIGITAL HOME. Todos los derechos reservados.
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => setGoogleToolsOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-white transition flex items-center gap-2 cursor-pointer shadow-sm group"
+              title="Configuración de Google Analytics, Search Console y Tag Manager"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <BarChart3 className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="font-medium text-[11px]">Google Suite (Analytics, GTM & SEO)</span>
+            </button>
+            <a
+              href="/sitemap.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#D9D9D9]/60 hover:text-white text-[11px] transition flex items-center gap-1"
+            >
+              <FileText className="w-3 h-3" /> Sitemap
+            </a>
+            <a
+              href="/robots.txt"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#D9D9D9]/60 hover:text-white text-[11px] transition flex items-center gap-1"
+            >
+              <ShieldCheck className="w-3 h-3" /> Robots.txt
+            </a>
+          </div>
+        </div>
       </footer>
 
       {/* 5. Floating Action Speed Dials (CRO Actions) */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
-        
+        {/* Google Suite Manager Floating Trigger */}
+        <button
+          onClick={() => setGoogleToolsOpen(true)}
+          className="w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-indigo-950 text-amber-400 border border-slate-700/80 hover:border-amber-400 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer group relative backdrop-blur-md"
+          aria-label="Google Suite (Analytics, GTM, Search Console)"
+          title="Google Suite: Analytics, Tag Manager & Search Console"
+        >
+          <BarChart3 className="w-6 h-6 text-amber-400 group-hover:rotate-6 transition-transform" />
+          <span className="absolute top-1 right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900 animate-pulse"></span>
+          <span className="absolute right-full mr-3 px-2.5 py-1 bg-[#060B16]/95 border border-white/10 rounded-md text-[10px] font-mono tracking-wider text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl">
+            GOOGLE SUITE & SEO
+          </span>
+        </button>
+
         {/* WhatsApp Direct */}
         <a
           href="https://wa.me/573226138773"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+          onClick={() => trackWhatsAppClick('floating_button')}
+          className="w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer group relative overflow-hidden"
           aria-label="Hablar directo por WhatsApp"
         >
-          <img
-            src="https://lh3.googleusercontent.com/d/1wHRTYvizLjkgIkLCJF-skKVH4HKY9mpN"
-            alt="WhatsApp"
-            className="w-full h-full object-cover rounded-full"
-            referrerPolicy="no-referrer"
-          />
+          <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+          </svg>
           <span className="absolute right-full mr-3 px-2 py-1 bg-[#060B16]/95 border border-white/10 rounded-md text-[10px] font-mono tracking-wider text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             HABLAR CON ASESOR
           </span>
@@ -2653,6 +2783,13 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* 8. Google Suite Modal: Analytics, Tag Manager & Search Console */}
+      <GoogleToolsModal
+        isOpen={googleToolsOpen}
+        onClose={() => setGoogleToolsOpen(false)}
+      />
+
     </div>
   );
 }
+

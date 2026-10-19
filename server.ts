@@ -258,7 +258,84 @@ async function startServer() {
     });
   });
 
+  // SEO - Dynamic Sitemap for Google Search Console & Web Crawlers
+  app.get("/sitemap.xml", (req, res) => {
+    const protocol = req.headers["x-forwarded-proto"] || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "digitalhome.com.co";
+    const baseUrl = `${protocol}://${host}`;
+    const today = new Date().toISOString().split("T")[0];
+
+    const routes = [
+      { path: "/", priority: "1.0", changefreq: "weekly" },
+      { path: "/nosotros", priority: "0.8", changefreq: "monthly" },
+      { path: "/servicios/brandingdemarca", priority: "0.9", changefreq: "weekly" },
+      { path: "/servicios/paginaswebcorporativas", priority: "0.9", changefreq: "weekly" },
+      { path: "/servicios/tiendasonline", priority: "0.9", changefreq: "weekly" },
+      { path: "/servicios/agentesia", priority: "0.9", changefreq: "weekly" },
+      { path: "/servicios/softwareamedida", priority: "0.9", changefreq: "weekly" },
+      { path: "/servicios/merchandising", priority: "0.9", changefreq: "weekly" },
+      { path: "/servicios/portafolio", priority: "0.8", changefreq: "weekly" },
+      { path: "/servicios/contacto", priority: "0.8", changefreq: "monthly" },
+      { path: "/servicios/blog", priority: "0.8", changefreq: "daily" },
+      { path: "/agenda", priority: "0.8", changefreq: "monthly" },
+    ];
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${routes
+  .map(
+    (r) => `  <url>
+    <loc>${baseUrl}${r.path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${r.changefreq}</changefreq>
+    <priority>${r.priority}</priority>
+  </url>`
+  )
+  .join("\n")}
+</urlset>`;
+
+    res.header("Content-Type", "application/xml; charset=utf-8");
+    res.send(xml);
+  });
+
+  // SEO - robots.txt for Googlebot & Crawlers
+  app.get("/robots.txt", (req, res) => {
+    const protocol = req.headers["x-forwarded-proto"] || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "digitalhome.com.co";
+    const baseUrl = `${protocol}://${host}`;
+
+    const robots = `User-agent: *
+Allow: /
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+    res.header("Content-Type", "text/plain; charset=utf-8");
+    res.send(robots);
+  });
+
+  // SEO - Google Search Console HTML File Verification Handler
+  app.get("/google:code([a-zA-Z0-9_-]+).html", (req, res) => {
+    const fullFileName = `google${req.params.code}.html`;
+    res.header("Content-Type", "text/html; charset=utf-8");
+    res.send(`google-site-verification: ${fullFileName}`);
+  });
+
+  // API - SEO & Analytics Status Endpoint
+  app.get("/api/seo-status", (req, res) => {
+    const protocol = req.headers["x-forwarded-proto"] || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "digitalhome.com.co";
+    res.json({
+      status: "ACTIVE",
+      sitemapUrl: `${protocol}://${host}/sitemap.xml`,
+      robotsUrl: `${protocol}://${host}/robots.txt`,
+      indexedRoutesCount: 12,
+      googleAnalyticsReady: true,
+      googleTagManagerReady: true,
+      googleSearchConsoleReady: true,
+    });
+  });
+
   // Serve static files / Vite middleware
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

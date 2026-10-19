@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Volume2, VolumeX, Sparkles, Activity, ShieldCheck } from 'lucide-react';
 import { ServiceId } from '../types';
 
 interface ChameleonCanvasProps {
@@ -9,76 +10,84 @@ interface ChameleonCanvasProps {
 
 // Service-specific color palettes & holographic themes
 const SERVICE_THEMES: Record<string, {
+  name: string;
   primary: string;
   secondary: string;
   glow: string;
   eyeColor: string;
-  skinTint: string;
   auraBg: string;
   hudText: string;
+  filter: string;
 }> = {
   branding: {
-    primary: '#60AB26', // Custom smooth green
+    name: 'Branding de Marca',
+    primary: '#60AB26',
     secondary: '#437E17',
     glow: 'rgba(96, 171, 38, 0.45)',
     eyeColor: '#81D041',
-    skinTint: 'green',
-    auraBg: 'from-[#60AB26]/30 via-emerald-600/15 to-transparent',
-    hudText: 'IDENTIDAD BIOMIMÉTICA'
+    auraBg: 'from-[#60AB26]/30 via-emerald-600/20 to-transparent',
+    hudText: 'IDENTIDAD BIOMIMÉTICA',
+    filter: 'hue-rotate(95deg) saturate(1.3) contrast(1.08)'
   },
   web: {
-    primary: '#F7AA03', // Custom smooth yellow
+    name: 'Páginas Web',
+    primary: '#F7AA03',
     secondary: '#C48400',
     glow: 'rgba(247, 170, 3, 0.45)',
     eyeColor: '#FFC533',
-    skinTint: 'yellow',
-    auraBg: 'from-[#F7AA03]/30 via-amber-500/15 to-transparent',
-    hudText: 'ARQUITECTURA WEB ULTRA-RÁPIDA'
+    auraBg: 'from-[#F7AA03]/30 via-amber-500/20 to-transparent',
+    hudText: 'ARQUITECTURA WEB ULTRA-RÁPIDA',
+    filter: 'hue-rotate(35deg) saturate(1.4) contrast(1.08)'
   },
   ecommerce: {
-    primary: '#DE4C00', // Custom smooth orange
+    name: 'Tiendas Online',
+    primary: '#DE4C00',
     secondary: '#A03400',
     glow: 'rgba(222, 76, 0, 0.45)',
     eyeColor: '#FF6F26',
-    skinTint: 'orange',
-    auraBg: 'from-[#DE4C00]/30 via-orange-600/15 to-transparent',
-    hudText: 'CONVERSIÓN DE ALTO IMPACTO'
+    auraBg: 'from-[#DE4C00]/30 via-orange-600/20 to-transparent',
+    hudText: 'CONVERSIÓN DE ALTO IMPACTO',
+    filter: 'hue-rotate(15deg) saturate(1.45) contrast(1.08)'
   },
   ai: {
-    primary: '#044FCD', // Custom smooth royal electric blue
+    name: 'Agentes IA',
+    primary: '#044FCD',
     secondary: '#02348A',
     glow: 'rgba(4, 79, 205, 0.45)',
     eyeColor: '#3B82F6',
-    skinTint: 'blue',
-    auraBg: 'from-[#044FCD]/30 via-blue-600/15 to-transparent',
-    hudText: 'AGENTES COGNITIVOS IA'
+    auraBg: 'from-[#044FCD]/30 via-blue-600/20 to-transparent',
+    hudText: 'AGENTES COGNITIVOS IA',
+    filter: 'hue-rotate(195deg) saturate(1.35) contrast(1.1)'
   },
   software: {
-    primary: '#6A1EB3', // Custom smooth purple
+    name: 'Software a Medida',
+    primary: '#6A1EB3',
     secondary: '#48127E',
     glow: 'rgba(106, 30, 179, 0.45)',
     eyeColor: '#9B4BE5',
-    skinTint: 'purple',
-    auraBg: 'from-[#6A1EB3]/30 via-purple-600/15 to-transparent',
-    hudText: 'SISTEMAS ENTERPRISE ESCALABLES'
+    auraBg: 'from-[#6A1EB3]/30 via-purple-600/20 to-transparent',
+    hudText: 'SISTEMAS ENTERPRISE ESCALABLES',
+    filter: 'hue-rotate(255deg) saturate(1.4) contrast(1.1)'
   },
   merch: {
-    primary: '#FF1D1D', // Custom smooth red
+    name: 'Merchandising',
+    primary: '#FF1D1D',
     secondary: '#B80000',
     glow: 'rgba(255, 29, 29, 0.45)',
     eyeColor: '#FF5E5E',
-    skinTint: 'red',
-    auraBg: 'from-[#FF1D1D]/30 via-red-600/15 to-transparent',
-    hudText: 'MERCHANDISING Y EXPERIENCIA FÍSICA'
+    auraBg: 'from-[#FF1D1D]/30 via-red-600/20 to-transparent',
+    hudText: 'EXPERIENCIA DE MARCA FÍSICA',
+    filter: 'hue-rotate(330deg) saturate(1.45) contrast(1.1)'
   },
   default: {
+    name: 'Ecosistema Integral',
     primary: '#0D6EFD',
     secondary: '#6366F1',
-    glow: 'rgba(13, 110, 253, 0.35)',
+    glow: 'rgba(13, 110, 253, 0.4)',
     eyeColor: '#60A5FA',
-    skinTint: 'default',
-    auraBg: 'from-blue-600/15 via-purple-600/10 to-transparent',
-    hudText: 'SISTEMA ADAPTATIVO EN LINEA'
+    auraBg: 'from-blue-600/25 via-purple-600/15 to-transparent',
+    hudText: 'GUARDIÁN BIOMIMÉTICO 3D',
+    filter: 'saturate(1.1) contrast(1.05)'
   }
 };
 
@@ -88,18 +97,19 @@ export default function ChameleonCanvas({
   isFooter = false
 }: ChameleonCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
-  // State for interactive mouse rotation/tilt
+  // Interactive mouse tilt state
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isBlinking, setIsBlinking] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [pulseScan, setPulseScan] = useState(0);
 
   // Active theme determination
   const currentKey = hoveredService || (activeService in SERVICE_THEMES ? activeService : 'default');
   const palette = SERVICE_THEMES[currentKey] || SERVICE_THEMES.default;
 
-  // 1. Mouse movement listener for 3D tilt & eye tracking
+  // 1. Mouse movement listener for smooth 3D tilt
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
@@ -110,244 +120,204 @@ export default function ChameleonCanvas({
       const offsetX = e.clientX - centerX;
       const offsetY = e.clientY - centerY;
 
-      // Limit tilt angles (-15deg to +15deg)
-      const tiltX = Math.max(-12, Math.min(12, (offsetY / (window.innerHeight / 2)) * -15));
-      const tiltY = Math.max(-12, Math.min(12, (offsetX / (window.innerWidth / 2)) * 15));
+      // Limit tilt angles (-10deg to +10deg)
+      const tiltX = Math.max(-10, Math.min(10, (offsetY / (window.innerHeight / 2)) * -12));
+      const tiltY = Math.max(-10, Math.min(10, (offsetX / (window.innerWidth / 2)) * 12));
 
       setTilt({ x: tiltX, y: tiltY });
-
-      // Eye pupil tracking offset (-8px to +8px)
-      const eyeX = Math.max(-8, Math.min(8, (offsetX / (rect.width / 2)) * 8));
-      const eyeY = Math.max(-8, Math.min(8, (offsetY / (rect.height / 2)) * 8));
-      setMousePos({ x: eyeX, y: eyeY });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // 2. Random eye blink simulation
-  useEffect(() => {
-    const blinkInterval = setInterval(() => {
-      if (Math.random() > 0.4) {
-        setIsBlinking(true);
-        setTimeout(() => setIsBlinking(false), 180);
-      }
-    }, 3500);
-
-    return () => clearInterval(blinkInterval);
-  }, []);
-
-  // 3. Holographic HUD scanning loop
+  // 2. Holographic HUD scanning loop
   useEffect(() => {
     const scanInterval = setInterval(() => {
       setPulseScan((prev) => (prev + 1) % 100);
-    }, 50);
+    }, 45);
     return () => clearInterval(scanInterval);
   }, []);
+
+  // 3. Autoplay and loop video reliably
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+
+    const tryPlay = () => {
+      const promise = video.play();
+      if (promise !== undefined) {
+        promise
+          .then(() => setIsVideoPlaying(true))
+          .catch(() => {
+            video.muted = true;
+            video.play()
+              .then(() => setIsVideoPlaying(true))
+              .catch(() => setIsVideoPlaying(false));
+          });
+      }
+    };
+
+    tryPlay();
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        video.pause();
+      } else {
+        tryPlay();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  // 4. Toggle audio
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
 
   return (
     <div 
       ref={containerRef}
       className={`relative w-full flex items-center justify-center select-none ${
-        isFooter ? 'h-48 sm:h-64' : 'h-[360px] sm:h-[480px] lg:h-[540px]'
+        isFooter ? 'h-48 sm:h-64' : 'h-[360px] sm:h-[480px] lg:h-[530px]'
       }`}
     >
-      {/* SVG Color Filters for Monotone / Dynamic Skin Tinting */}
-      <svg className="hidden">
-        <defs>
-          <filter id="green-monotone">
-            <feColorMatrix
-              type="matrix"
-              values="0.09 0.27 0.02 0 0
-                      0.16 0.52 0.04 0 0
-                      0.03 0.11 0.01 0 0
-                      0    0    0    1 0"
-            />
-          </filter>
-          <filter id="yellow-monotone">
-            <feColorMatrix
-              type="matrix"
-              values="0.21 0.69 0.07 0 0
-                      0.14 0.48 0.05 0 0
-                      0.01 0.01 0.00 0 0
-                      0    0    0    1 0"
-            />
-          </filter>
-          <filter id="orange-monotone">
-            <feColorMatrix
-              type="matrix"
-              values="0.19 0.62 0.06 0 0
-                      0.06 0.22 0.02 0 0
-                      0.00 0.00 0.00 0 0
-                      0    0    0    1 0"
-            />
-          </filter>
-          <filter id="blue-monotone">
-            <feColorMatrix
-              type="matrix"
-              values="0.01 0.02 0.00 0 0
-                      0.06 0.22 0.02 0 0
-                      0.16 0.57 0.06 0 0
-                      0    0    0    1 0"
-            />
-          </filter>
-          <filter id="purple-monotone">
-            <feColorMatrix
-              type="matrix"
-              values="0.09 0.30 0.03 0 0
-                      0.02 0.08 0.01 0 0
-                      0.15 0.50 0.05 0 0
-                      0    0    0    1 0"
-            />
-          </filter>
-          <filter id="red-monotone">
-            <feColorMatrix
-              type="matrix"
-              values="0.21 0.72 0.07 0 0
-                      0.02 0.08 0.01 0 0
-                      0.02 0.08 0.01 0 0
-                      0    0    0    1 0"
-            />
-          </filter>
-        </defs>
-      </svg>
-
       {/* 1. OUTER HOLOGRAPHIC CYBERNETIC AURA */}
       <div 
-        className={`absolute inset-0 rounded-full bg-gradient-to-tr ${palette.auraBg} blur-3xl opacity-70 transition-all duration-1000 animate-pulse`}
+        className={`absolute inset-0 rounded-full bg-gradient-to-tr ${palette.auraBg} blur-3xl opacity-75 transition-all duration-700 animate-pulse`}
         style={{
-          boxShadow: `0 0 80px ${palette.glow}`,
+          boxShadow: `0 0 100px ${palette.glow}`,
         }}
       />
 
-      {/* 2. TECH HUD ORBITAL SPINS (Movement dots without border frame lines) */}
-      <div className="absolute inset-4 sm:inset-10 rounded-full animate-[spin_40s_linear_infinite] pointer-events-none">
+      {/* 2. TECH HUD ORBITAL SPINS */}
+      <div className="absolute inset-2 sm:inset-6 rounded-full animate-[spin_40s_linear_infinite] pointer-events-none opacity-60">
         <div 
-          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full transition-colors duration-700"
-          style={{ backgroundColor: palette.primary, boxShadow: `0 0 12px ${palette.primary}` }}
+          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-colors duration-700 shadow-lg"
+          style={{ backgroundColor: palette.primary, boxShadow: `0 0 15px ${palette.primary}` }}
         />
         <div 
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 rounded-full opacity-60 transition-colors duration-700"
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2.5 h-2.5 rounded-full opacity-70 transition-colors duration-700"
           style={{ backgroundColor: palette.secondary }}
         />
       </div>
 
-      <div className="absolute inset-12 sm:inset-20 rounded-full animate-[spin_25s_linear_infinite_reverse] pointer-events-none" />
+      <div className="absolute inset-10 sm:inset-16 rounded-full animate-[spin_25s_linear_infinite_reverse] pointer-events-none opacity-40">
+        <div 
+          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2 h-2 rounded-full transition-colors duration-700"
+          style={{ backgroundColor: palette.primary }}
+        />
+      </div>
 
       {/* 3. RADIAL SCANNING BEAM */}
       <div 
-        className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none transition-all duration-300"
+        className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none transition-all duration-300"
         style={{
           top: `${pulseScan}%`,
           boxShadow: `0 0 15px ${palette.primary}`,
         }}
       />
 
-      {/* 4. MAIN 3D TILT CONTAINER FOR THE MASCOT */}
+      {/* 4. MAIN 3D TILT CONTAINER FOR THE CHAMELEON ANIMATION */}
       <div 
-        className="relative w-full max-w-[320px] sm:max-w-[420px] aspect-square flex items-center justify-center transition-transform duration-200 ease-out"
+        className="relative w-full max-w-[340px] sm:max-w-[460px] lg:max-w-[500px] aspect-[16/10] sm:aspect-video flex items-center justify-center transition-transform duration-200 ease-out z-10"
         style={{
           transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
         }}
       >
-        {/* 5. MASKED IMAGE CONTAINER WITH DYNAMIC CHROMATIC SHIFT */}
+        {/* Sleek Glassmorphism Cyber-Shield Frame */}
         <div 
-          className="relative w-full h-full p-6 sm:p-8 flex items-center justify-center transition-all duration-700"
+          className="relative w-full h-full rounded-3xl overflow-hidden border border-white/20 bg-[#060B16]/80 p-2 sm:p-2.5 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-md transition-all duration-700 group hover:border-white/35"
           style={{
-            filter: `drop-shadow(0 15px 35px ${palette.glow})`,
-            transformStyle: 'preserve-3d'
+            boxShadow: `0 20px 50px -10px ${palette.glow}, 0 0 30px rgba(0,0,0,0.9)`,
           }}
         >
-          {/* Main Chameleon Logo Image Render */}
-          <img
-            src="https://lh3.googleusercontent.com/d/1-BBeRZDeDNsbeNKI2Hdo5LaYEGW9ncZk"
-            alt="El Camaleón - DIGITAL HOME"
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-contain transition-all duration-1000 filter"
-            style={{
-              // Give a single-tone high-end filter based on active service
-              filter: (currentKey === 'branding' 
-                ? 'url(#green-monotone) contrast(1.1) brightness(1.12)'
-                : currentKey === 'web'
-                ? 'url(#yellow-monotone) contrast(1.15) brightness(1.12)'
-                : currentKey === 'ecommerce'
-                ? 'url(#orange-monotone) contrast(1.12) brightness(1.12)'
-                : currentKey === 'ai'
-                ? 'url(#blue-monotone) contrast(1.15) brightness(1.1)'
-                : currentKey === 'software'
-                ? 'url(#purple-monotone) contrast(1.15) brightness(1.1)'
-                : currentKey === 'merch'
-                ? 'url(#red-monotone) contrast(1.15) brightness(1.12)'
-                : 'contrast(1.1) saturate(1.25)') + ` drop-shadow(0 20px 45px ${palette.glow || 'rgba(13,110,253,0.3)'})`,
-              transform: 'translateZ(30px)',
-            }}
-          />
-
-          {/* 6. HYPER-DETAILED CYBERNETIC EYE (Physically tracks cursor & blinks) */}
-          <div 
-            className="absolute z-10 pointer-events-none transition-all duration-300"
-            style={{
-              // Position calculated specifically for the eye position of this chameleon mascot render
-              top: '38.5%',
-              left: '42.8%',
-              width: '11.5%',
-              height: '11.5%',
-              transform: 'translateZ(50px)',
-            }}
-          >
-            {/* Outer Cyber Iris Frame */}
-            <div 
-              className={`relative w-full h-full rounded-full border-2 border-white/60 bg-black/90 flex items-center justify-center overflow-hidden transition-all duration-300 ${
-                isBlinking ? 'scale-y-[0.05]' : 'scale-y-100'
-              }`}
+          {/* Inner Video Container with Chromatic Shift Filter */}
+          <div className="relative w-full h-full rounded-2xl overflow-hidden bg-black/90 flex items-center justify-center">
+            
+            {/* 3D Chameleon Video Render */}
+            <video
+              ref={videoRef}
+              src="/assets/chameleon_guardian_video.mp4"
+              poster="/assets/chameleon_poster.png"
+              autoPlay
+              loop
+              muted={isMuted}
+              playsInline
+              preload="auto"
+              onPlay={() => setIsVideoPlaying(true)}
+              className="w-full h-full object-cover transition-all duration-700"
               style={{
-                boxShadow: `0 0 15px ${palette.eyeColor}`,
-                borderColor: palette.eyeColor,
+                filter: palette.filter,
               }}
-            >
-              {/* Inner Glowing Pupil (Tracks Mouse Position) */}
-              <div 
-                className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center transition-transform duration-100 ease-out"
-                style={{
-                  backgroundColor: palette.eyeColor,
-                  transform: `translate(${mousePos.x}px, ${mousePos.y}px)`,
-                  boxShadow: `0 0 10px ${palette.eyeColor}, inset 0 0 4px #000`,
-                }}
-              >
-                {/* Central High-Tech Slit Pupil */}
-                <div className="w-1 h-2.5 sm:h-3 bg-black rounded-full" />
+            />
+
+            {/* Subtle Futuristic Radial Vignette to blend edges */}
+            <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black/60 pointer-events-none" />
+
+            {/* Corner Tech Reticle Lines */}
+            <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 pointer-events-none transition-colors duration-500" style={{ borderColor: palette.primary }} />
+            <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 pointer-events-none transition-colors duration-500" style={{ borderColor: palette.primary }} />
+            <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 pointer-events-none transition-colors duration-500" style={{ borderColor: palette.primary }} />
+            <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 pointer-events-none transition-colors duration-500" style={{ borderColor: palette.primary }} />
+
+            {/* Top Status Badges */}
+            <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-auto">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 border border-white/15 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: palette.primary }} />
+                <span className="text-[9px] sm:text-[10px] font-mono tracking-wider font-bold text-white uppercase">
+                  KAMALEON 3D • ONLINE
+                </span>
               </div>
 
-              {/* Holographic Eye Glint Reflection */}
-              <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-white rounded-full opacity-80" />
-            </div>
-          </div>
-
-          {/* 7. ENERGY CIRCUIT OVERLAY NODES */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            {/* Pulsing Target Reticle Node 1 (Head) */}
-            <div 
-              className="absolute w-3 h-3 rounded-full border border-white/40 flex items-center justify-center animate-ping"
-              style={{ top: '30%', left: '48%', animationDuration: '3s' }}
-            >
-              <div className="w-1 h-1 rounded-full" style={{ backgroundColor: palette.primary }} />
+              {/* Mute / Unmute Interactive Audio Toggle */}
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="p-1.5 rounded-full bg-black/70 hover:bg-black/90 border border-white/20 text-white backdrop-blur-md transition-all duration-200 cursor-pointer shadow-md hover:scale-110 active:scale-95"
+                title={isMuted ? 'Activar Sonido del Guardián' : 'Silenciar'}
+                aria-label={isMuted ? 'Activar Sonido' : 'Silenciar'}
+              >
+                {isMuted ? <VolumeX className="w-3.5 h-3.5 text-white/70" /> : <Volume2 className="w-3.5 h-3.5 text-brand-green" />}
+              </button>
             </div>
 
-            {/* Pulsing Target Reticle Node 2 (Spine) */}
-            <div 
-              className="absolute w-2.5 h-2.5 rounded-full border border-white/30 flex items-center justify-center animate-pulse"
-              style={{ top: '52%', left: '60%' }}
-            >
-              <div className="w-1 h-1 rounded-full" style={{ backgroundColor: palette.secondary }} />
+            {/* Dynamic Interactive HUD Badge */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-none">
+              <div className="px-3 py-1 rounded-xl bg-black/75 border border-white/15 backdrop-blur-md flex items-center gap-2">
+                <Activity className="w-3 h-3 text-white/70" />
+                <span className="text-[9px] sm:text-[10px] font-mono tracking-wider text-white font-semibold uppercase">
+                  {palette.hudText}
+                </span>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/75 border border-white/15 backdrop-blur-md">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <span className="text-[9px] font-mono text-[#D9D9D9]/80 uppercase">
+                  BIOMIMÉTICO
+                </span>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
 
       {/* Subtle Bottom Ambient Platform Glow */}
       <div 
-        className="absolute bottom-2 w-1/2 h-4 rounded-full blur-xl opacity-50 transition-colors duration-700"
+        className="absolute bottom-2 w-2/3 h-5 rounded-full blur-2xl opacity-60 transition-colors duration-700 pointer-events-none"
         style={{ backgroundColor: palette.primary }}
       />
     </div>
