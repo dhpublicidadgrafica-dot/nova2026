@@ -30,7 +30,6 @@ import {
   Briefcase,
   History,
   TrendingUp,
-  ShieldCheck,
   Lightbulb,
   CheckCircle2,
   Target,
@@ -38,9 +37,7 @@ import {
   Video,
   Lock,
   Info,
-  Image as ImageIcon,
-  BarChart3,
-  FileText
+  Image as ImageIcon
 } from 'lucide-react';
 
 import { ServiceId, ServiceDetail, PortfolioItem, BlogArticle, ChatMessage } from './types';
@@ -584,14 +581,6 @@ export default function App() {
           {/* Header Action Button */}
           <div className="hidden md:flex items-center gap-3">
             <button
-              onClick={() => setGoogleToolsOpen(true)}
-              className="p-2.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-amber-400 hover:text-amber-300 hover:border-amber-400/50 transition-all duration-300 cursor-pointer flex items-center gap-1.5"
-              title="Google Analytics, Search Console & Tag Manager"
-            >
-              <BarChart3 className="w-4 h-4 text-amber-400" />
-              <span className="hidden lg:inline text-[11px] text-slate-300">Google Suite</span>
-            </button>
-            <button
               onClick={handleAgendarAsesoria}
               className="px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide bg-gradient-to-r from-brand-blue to-brand-purple hover:shadow-[0_0_20px_rgba(13,110,253,0.3)] transition-all duration-300 cursor-pointer flex items-center gap-2 text-white"
             >
@@ -671,16 +660,6 @@ export default function App() {
                 );
               })}
 
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setGoogleToolsOpen(true);
-                }}
-                className="w-full py-2.5 rounded-xl text-center text-xs font-semibold bg-slate-900 border border-slate-700 text-amber-400 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <BarChart3 className="w-4 h-4 text-amber-400" />
-                <span>Google Suite (Analytics, GTM & Search Console)</span>
-              </button>
 
               <button
                 onClick={() => {
@@ -2005,58 +1984,16 @@ export default function App() {
           </div>
         </div>
 
-        {/* Sub-footer: Google Suite, SEO & Legal */}
-        <div className="max-w-7xl mx-auto px-4 md:px-8 mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#D9D9D9]/60">
+        {/* Sub-footer: Legal */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8 mt-12 pt-8 border-t border-white/5 flex items-center justify-center text-center text-xs text-[#D9D9D9]/60">
           <div>
             © {new Date().getFullYear()} NOVA Soluciones Digitales & DIGITAL HOME. Todos los derechos reservados.
-          </div>
-          
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={() => setGoogleToolsOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-white transition flex items-center gap-2 cursor-pointer shadow-sm group"
-              title="Configuración de Google Analytics, Search Console y Tag Manager"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <BarChart3 className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-              <span className="font-medium text-[11px]">Google Suite (Analytics, GTM & SEO)</span>
-            </button>
-            <a
-              href="/sitemap.xml"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#D9D9D9]/60 hover:text-white text-[11px] transition flex items-center gap-1"
-            >
-              <FileText className="w-3 h-3" /> Sitemap
-            </a>
-            <a
-              href="/robots.txt"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#D9D9D9]/60 hover:text-white text-[11px] transition flex items-center gap-1"
-            >
-              <ShieldCheck className="w-3 h-3" /> Robots.txt
-            </a>
           </div>
         </div>
       </footer>
 
       {/* 5. Floating Action Speed Dials (CRO Actions) */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
-        {/* Google Suite Manager Floating Trigger */}
-        <button
-          onClick={() => setGoogleToolsOpen(true)}
-          className="w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-indigo-950 text-amber-400 border border-slate-700/80 hover:border-amber-400 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer group relative backdrop-blur-md"
-          aria-label="Google Suite (Analytics, GTM, Search Console)"
-          title="Google Suite: Analytics, Tag Manager & Search Console"
-        >
-          <BarChart3 className="w-6 h-6 text-amber-400 group-hover:rotate-6 transition-transform" />
-          <span className="absolute top-1 right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900 animate-pulse"></span>
-          <span className="absolute right-full mr-3 px-2.5 py-1 bg-[#060B16]/95 border border-white/10 rounded-md text-[10px] font-mono tracking-wider text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl">
-            GOOGLE SUITE & SEO
-          </span>
-        </button>
-
         {/* WhatsApp Direct */}
         <a
           href="https://wa.me/573226138773"
